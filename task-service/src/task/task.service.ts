@@ -25,17 +25,26 @@ export class TaskService {
   }
 
   private deriveProjectId(projectId?: string, conversationId?: string): string | undefined {
-    return projectId ?? conversationId;
+    const normalizedProjectId = projectId?.trim();
+    if (normalizedProjectId) {
+      return normalizedProjectId;
+    }
+
+    const normalizedConversationId = conversationId?.trim();
+    return normalizedConversationId || undefined;
   }
 
   private withDerivedProjectId(task: Task): Task {
-    if (task.projectId || !task.conversationId) {
+    const projectId = task.projectId?.trim();
+    const conversationId = task.conversationId?.trim();
+
+    if (projectId || !conversationId) {
       return task;
     }
 
     return {
       ...task,
-      projectId: task.conversationId,
+      projectId: conversationId,
     } as Task;
   }
 

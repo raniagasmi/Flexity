@@ -79,13 +79,19 @@ export class DashboardService {
       });
     });
 
-    const alerts = this.buildTaskAlerts(tasks ?? []);
+    const normalizedTasks = (tasks ?? []).map((task) => ({
+      ...task,
+      projectId: task.projectId?.trim() || task.conversationId?.trim() || null,
+      conversationId: task.conversationId?.trim() || null,
+    }));
+
+    const alerts = this.buildTaskAlerts(normalizedTasks);
 
     return {
       projects,
       employees: Array.from(employeesMap.values()),
       alerts,
-      tasks: tasks ?? [],
+      tasks: normalizedTasks,
       lastUpdated: new Date().toISOString(),
     };
   }

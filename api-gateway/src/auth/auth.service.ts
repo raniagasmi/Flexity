@@ -6,6 +6,7 @@ import {
   UnauthorizedException,
   BadRequestException,
   ConflictException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
@@ -39,6 +40,21 @@ export class AuthService {
       if (error instanceof UnauthorizedException) {
         throw error;
       }
+
+      const message =
+        error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+      const looksLikeTransportError =
+        message.includes('econnrefused') ||
+        message.includes('etimedout') ||
+        message.includes('timeout') ||
+        message.includes('cannot read properties') ||
+        message.includes('transport') ||
+        message.includes('connect');
+
+      if (looksLikeTransportError) {
+        throw new ServiceUnavailableException('Authentication service is temporarily unavailable');
+      }
+
       throw new UnauthorizedException('Invalid credentials');
     }
   }

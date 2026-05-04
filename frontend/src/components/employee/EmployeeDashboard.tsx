@@ -118,15 +118,19 @@ export const EmployeeDashboard = ({ initialSection = 'tasks' }: EmployeeDashboar
       }>;
     }
 
-    const getTaskProjectKey = (task: TaskType) => task.projectId ?? task.conversationId ?? null;
+    const normalizeId = (value?: string | null) => value?.trim() || null;
+    const getTaskProjectKey = (task: TaskType) => normalizeId(task.projectId) ?? normalizeId(task.conversationId);
     const projects = data.projects ?? [];
-    if (projects.length === 0) {
-      return [];
+    const tasksByProjectId = new Map<string, TaskType[]>();
+
+    for (const task of data.tasks) {
+      const key = getTaskProjectKey(task) ?? '__other__';
+      const current = tasksByProjectId.get(key) ?? [];
+      current.push(task);
+      tasksByProjectId.set(key, current);
     }
 
-    return projects.map((project) => {
-      const tasks = data.tasks.filter((task) => getTaskProjectKey(task) === project.id);
-
+    const buildProjectInsight = (id: string, name: string, tasks: TaskType[]) => {
       const total = tasks.length;
       const done = tasks.filter((task) => task.status === 'DONE').length;
       const inProgress = tasks.filter((task) => task.status === 'IN_PROGRESS').length;
@@ -152,8 +156,8 @@ export const EmployeeDashboard = ({ initialSection = 'tasks' }: EmployeeDashboar
         .map((employee) => employee.name);
 
       return {
-        id: project.id,
-        name: project.name,
+        id,
+        name,
         tasks,
         total,
         done,
@@ -164,19 +168,27 @@ export const EmployeeDashboard = ({ initialSection = 'tasks' }: EmployeeDashboar
         dueSoon,
         colleagues,
       };
-    });
-  }, [data]);
+    };
 
-  const unlinkedTasks = useMemo(() => {
-    if (!data) {
-      return [] as TaskType[];
+    const insights = projects.map((project) =>
+      buildProjectInsight(project.id, project.name, tasksByProjectId.get(project.id) ?? []),
+    );
+
+    const otherTasks = tasksByProjectId.get('__other__') ?? [];
+    if (otherTasks.length > 0) {
+      insights.push(buildProjectInsight('__other__', 'Other work', otherTasks));
     }
 
-    const projectIds = new Set((data.projects ?? []).map((project) => project.id));
-    return data.tasks.filter((task) => {
-      const key = task.projectId ?? task.conversationId;
-      return !key || !projectIds.has(key);
-    });
+    const knownProjectIds = new Set(projects.map((project) => project.id));
+    for (const [projectId, tasks] of tasksByProjectId.entries()) {
+      if (projectId === '__other__' || knownProjectIds.has(projectId)) {
+        continue;
+      }
+
+      insights.push(buildProjectInsight(projectId, `Unknown project`, tasks));
+    }
+
+    return insights;
   }, [data]);
 
   const projectTotals = useMemo(() => {
@@ -448,18 +460,6 @@ export const EmployeeDashboard = ({ initialSection = 'tasks' }: EmployeeDashboar
                   </SimpleGrid>
                 )}
 
-                {unlinkedTasks.length > 0 && (
-                  <Box mt={6} borderWidth={1} borderStyle="dashed" borderColor="orange.200" borderRadius="xl" p={4} bg="orange.50">
-                    <HStack justify="space-between" mb={2}>
-                      <Heading size="sm" color="orange.800">Unlinked work</Heading>
-                      <Badge colorScheme="orange">{unlinkedTasks.length}</Badge>
-                    </HStack>
-                    <Text color="orange.700" fontSize="sm">
-                      These tasks are not linked to a known project id yet. Once the API consistently returns projectId,
-                      they will appear under the correct project card automatically.
-                    </Text>
-                  </Box>
-                )}
               </Box>
             )}
           </Box>

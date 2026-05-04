@@ -91,11 +91,16 @@ export class AuthService {
         private jwtService: JwtService,
     ) {}
 
+    private normalizeEmail(email: string) {
+        return email.trim().toLowerCase();
+    }
+
     async register(createUserDto: CreateUserDto): Promise<{ token: string; user: Partial<UserDocument>; verificationToken: string }> {
         try {
             const { email, password, teamSize, primaryUseCase, invitedTeammates } = createUserDto;
+            const normalizedEmail = this.normalizeEmail(email);
 
-            const existingUser = await this.userModel.findOne({ email });
+            const existingUser = await this.userModel.findOne({ email: normalizedEmail });
             if (existingUser) {
                 throw new ConflictException('User with this email already exists');
             }
@@ -107,6 +112,7 @@ export class AuthService {
 
             const newUser = await this.userModel.create({
                 ...createUserDto,
+                email: normalizedEmail,
                 role: userRole,
                 password: hashedPassword,
                 isActive: true,
@@ -144,8 +150,9 @@ export class AuthService {
 
     async login(loginUserDto: LoginUserDto): Promise<{ token: string }> {
         const { email, password } = loginUserDto;
+        const normalizedEmail = this.normalizeEmail(email);
         
-        const user = await this.validateUser(email, password);
+        const user = await this.validateUser(normalizedEmail, password);
         
         const token = this.jwtService.sign({
             userId: user._id,
@@ -157,7 +164,7 @@ export class AuthService {
     }
 
     async validateUser(email: string, password: string): Promise<UserDocument> {
-        const user = await this.userModel.findOne({ email });
+        const user = await this.userModel.findOne({ email: this.normalizeEmail(email) });
         if (!user) {
             throw new UnauthorizedException('Invalid credentials');
         }
@@ -171,7 +178,7 @@ export class AuthService {
     }
 
     async forgotPassword(email: string) {
-        const normalizedEmail = email.trim().toLowerCase();
+        const normalizedEmail = this.normalizeEmail(email);
         const user = await this.userModel.findOne({ email: normalizedEmail });
 
         if (!user) {
@@ -220,7 +227,7 @@ export class AuthService {
     }
 
     async resendVerification(email: string) {
-        const normalizedEmail = email.trim().toLowerCase();
+        const normalizedEmail = this.normalizeEmail(email);
         const user = await this.userModel.findOne({ email: normalizedEmail });
 
         if (!user) {
