@@ -53,7 +53,7 @@ export class DashboardService {
       };
     });
 
-    const employeesMap = new Map<string, { id: string; name: string; email: string }>();
+    const employeesMap = new Map<string, { id: string; name: string; email: string; avatarUrl?: string }>();
     (Array.isArray(conversations) ? conversations : []).forEach((conversation: any) => {
       const members = [
         ...(conversation?.members ?? []),
@@ -70,12 +70,13 @@ export class DashboardService {
         const lastName = String(member?.lastName ?? '').trim();
         const fullName = String(member?.fullName ?? '').trim();
         const email = String(member?.email ?? '').trim();
+        const avatarUrl = String(member?.avatarUrl ?? '').trim();
 
         // Never fall back to raw IDs in the UI.
         const candidateName = `${firstName} ${lastName}`.trim() || fullName;
         const name = candidateName && candidateName !== id ? candidateName : 'Unknown Employee';
 
-        employeesMap.set(id, { id, name, email });
+        employeesMap.set(id, { id, name, email, avatarUrl: avatarUrl || undefined });
       });
     });
 

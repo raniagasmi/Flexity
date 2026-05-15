@@ -23,6 +23,7 @@ type UserProfile = {
   firstName?: string;
   lastName?: string;
   email?: string;
+  avatarUrl?: string;
 };
 
 type UserSummary = {
@@ -30,6 +31,7 @@ type UserSummary = {
   firstName: string;
   lastName: string;
   email?: string;
+  avatarUrl?: string;
   role: string;
   fullName: string;
 };
@@ -351,6 +353,7 @@ export class CollaborationService {
       firstName: user.firstName ?? '',
       lastName: user.lastName ?? '',
       email: user.email,
+      avatarUrl: user.avatarUrl,
       role: this.resolveRole(user),
       fullName: this.fullName(user) || user.email || this.resolveUserId(user),
     };

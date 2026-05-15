@@ -104,7 +104,7 @@ const Task: React.FC<TaskProps> = ({ task, onEdit }) => {
                 )}
               </Flex>
               <Tooltip label={`Assigned to: ${assigneeLabel}`}>
-                <Avatar name={assigneeLabel} size="xs" />
+                <Avatar name={assigneeLabel} src={task.assignedToUser?.avatarUrl} size="xs" />
               </Tooltip>
             </Flex>
           </VStack>

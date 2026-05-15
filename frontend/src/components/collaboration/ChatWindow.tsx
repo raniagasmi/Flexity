@@ -254,7 +254,12 @@ const ChatWindow = ({
 
                 return (
                   <Box key={message.id ?? message._id ?? `${message.conversationId}-${message.timestamp ?? message.content}`}> 
-                    <MessageBubble message={message} isOwnMessage={isOwnMessage} senderLabel={senderLabel} />
+                    <MessageBubble
+                      message={message}
+                      isOwnMessage={isOwnMessage}
+                      senderLabel={senderLabel}
+                      senderAvatarUrl={message.senderType === 'USER' ? sender?.avatarUrl : undefined}
+                    />
                   </Box>
                 );
               })

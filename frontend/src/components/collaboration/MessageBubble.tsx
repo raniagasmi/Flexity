@@ -6,9 +6,10 @@ interface MessageBubbleProps {
   message: CollaborationMessage;
   isOwnMessage: boolean;
   senderLabel: string;
+  senderAvatarUrl?: string;
 }
 
-const MessageBubble = ({ message, isOwnMessage, senderLabel }: MessageBubbleProps) => {
+const MessageBubble = ({ message, isOwnMessage, senderLabel, senderAvatarUrl }: MessageBubbleProps) => {
   if (message.senderType === 'SYSTEM') {
     if (message.messageType === 'TASK_ASSIGNED') {
       return (
@@ -59,6 +60,7 @@ const MessageBubble = ({ message, isOwnMessage, senderLabel }: MessageBubbleProp
       <Flex gap={3} align="flex-end" direction={isOwnMessage ? 'row-reverse' : 'row'} maxW="88%">
         <Avatar
           name={senderLabel}
+          src={senderAvatarUrl}
           size="sm"
           bg={isAiMessage ? 'purple.500' : isOwnMessage ? 'teal.500' : 'gray.500'}
           color="white"

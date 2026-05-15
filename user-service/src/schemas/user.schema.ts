@@ -73,6 +73,9 @@ export class User {
 
     @Prop({ default: false })
     onboardingCompleted!: boolean;
+
+    @Prop({ type: String, default: '' })
+    avatarUrl!: string;
 }
 
 export type UserDocument = User & Document;

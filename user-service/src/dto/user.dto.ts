@@ -50,15 +50,19 @@ export class LoginUserDto {
 }
 
 export class UpdateUserDto {
+    @IsOptional()
     @IsString()
     firstName?: string;
 
+    @IsOptional()
     @IsString()
     lastName?: string;
 
+    @IsOptional()
     @IsEmail()
     email?: string;
 
+    @IsOptional()
     @IsEnum(UserRole)
     role?: UserRole;
 
@@ -79,6 +83,10 @@ export class UpdateUserDto {
 
     @IsOptional()
     onboardingCompleted?: boolean;
+
+    @IsOptional()
+    @IsString()
+    avatarUrl?: string;
 }
 
 export class UpdatePresenceDto {

@@ -63,16 +63,25 @@ export class UserService {
             throw new Error('Invalid user ID format');
         }
 
-        const user = await this.userModel.findByIdAndUpdate(
-            id,
-            updateUserDto,
-            { new: true }
-        ).select(this.safeSelect);
+        const user = await this.userModel.findById(id);
 
         if (!user) {
             throw new NotFoundException('User not found');
         }
-        return user;
+
+        Object.entries(updateUserDto).forEach(([key, value]) => {
+            if (value !== undefined) {
+                (user as unknown as Record<string, unknown>)[key] = value;
+            }
+        });
+
+        await user.save();
+
+        const sanitizedUser = await this.userModel.findById(id).select(this.safeSelect);
+        if (!sanitizedUser) {
+            throw new NotFoundException('User not found');
+        }
+        return sanitizedUser;
     }
 
     async delete(id: string): Promise<void> {

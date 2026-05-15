@@ -71,6 +71,7 @@ class AdminAnalyticsService {
       userId: employee.id,
       userName: `${employee.firstName} ${employee.lastName}`,
       email: employee.email,
+      avatarUrl: employee.avatarUrl,
       tasksCompleted,
       tasksPending,
       completionRate: Math.round(completionRate),

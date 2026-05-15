@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Avatar, Box, Flex, Tooltip, VStack } from '@chakra-ui/react';
+import { Avatar, Box, Flex, Heading, HStack, Text, Tooltip, VStack } from '@chakra-ui/react';
 import { authService } from '../../services/auth.service';
 import { userService } from '../../services/user.service';
 import { User } from '../../types/user';
@@ -67,8 +67,16 @@ const ProfilePage = () => {
         <SideNavbar onLogoutClick={handleLogout} />
       </Box>
       <Box flex={1} p={{ base: 6, md: 10 }} overflowY="auto">
-        <VStack gap={0} align="stretch" borderRadius="xl" overflow="hidden" bg="var(--light-color)">
-          <Box w="100%" h="30vh" position="relative" bg="var(--dark-color)">
+        <VStack gap={6} align="stretch">
+          <Box
+            borderRadius="3xl"
+            overflow="hidden"
+            bg="white"
+            borderWidth="1px"
+            borderColor="blackAlpha.100"
+            boxShadow="0 24px 50px rgba(15, 23, 42, 0.12)"
+          >
+            <Box w="100%" minH={{ base: '320px', md: '360px' }} position="relative" bg="var(--dark-color)">
             <Box position="absolute" top={4} left={4} zIndex={2}>
               <MobileSidebarDrawer onLogoutClick={handleLogout} />
             </Box>
@@ -77,14 +85,48 @@ const ProfilePage = () => {
             {banner === 'Particles' && <Particles />}
             {banner === 'Pattern' && <Pattern />}
             {banner === 'Hexagon' && <Hexagon />}
-            <Box ml={5} bg="var(--light-color)" position="absolute" top="22vh" p={2} borderRadius="full">
-              <Tooltip label={fullName} hasArrow>
-                <Avatar size="2xl" src={user?.avatarUrl || undefined} name={fullName} />
-              </Tooltip>
+            <Box
+              position="absolute"
+              inset={0}
+              bg="linear-gradient(180deg, rgba(15,23,42,0.18) 0%, rgba(15,23,42,0.68) 100%)"
+            />
+            <Box
+              position="absolute"
+              left={{ base: 5, md: 8 }}
+              right={{ base: 5, md: 8 }}
+              bottom={{ base: 5, md: 8 }}
+              zIndex={2}
+            >
+              <Flex
+                direction={{ base: 'column', md: 'row' }}
+                align={{ base: 'flex-start', md: 'flex-end' }}
+                justify="space-between"
+                gap={6}
+              >
+                <HStack spacing={5} align="flex-end">
+                  <Box bg="white" p={2} borderRadius="full" boxShadow="0 18px 40px rgba(15, 23, 42, 0.18)">
+                    <Tooltip label={fullName} hasArrow>
+                      <Avatar size="2xl" src={user?.avatarUrl || undefined} name={fullName} />
+                    </Tooltip>
+                  </Box>
+                  <Box color="white" pb={{ base: 0, md: 2 }}>
+                    <Text fontSize="sm" textTransform="uppercase" letterSpacing="0.12em" opacity={0.78}>
+                      Personal workspace
+                    </Text>
+                    <Heading size="lg" mt={1}>
+                      {fullName}
+                    </Heading>
+                    <Text mt={2} opacity={0.88}>
+                      Manage your account details, password, and profile picture from one place.
+                    </Text>
+                  </Box>
+                </HStack>
+              </Flex>
             </Box>
           </Box>
-          <Box>
+          <Box p={{ base: 5, md: 8 }}>
             {user && <Profile user={user} onSave={handleProfileSave} />}
+          </Box>
           </Box>
         </VStack>
       </Box>

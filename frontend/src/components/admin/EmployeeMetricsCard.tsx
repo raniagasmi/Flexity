@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Avatar,
   Box,
   Flex,
   Grid,
@@ -60,12 +61,15 @@ export const EmployeeMetricsCard: React.FC<EmployeeMetricsCardProps> = ({
         <Stack spacing={3}>
           {/* Header */}
           <Flex justify="space-between" align="start">
-            <VStack align="start" spacing={1}>
-              <Heading size="sm">{employee.userName}</Heading>
-              <Text fontSize="xs" color="gray.500">
-                {employee.email}
-              </Text>
-            </VStack>
+            <HStack align="start" spacing={3}>
+              <Avatar name={employee.userName} src={employee.avatarUrl} size="sm" />
+              <VStack align="start" spacing={1}>
+                <Heading size="sm">{employee.userName}</Heading>
+                <Text fontSize="xs" color="gray.500">
+                  {employee.email}
+                </Text>
+              </VStack>
+            </HStack>
             <Tooltip label={`Status: ${employee.currentStatus}`}>
               <Badge colorScheme={statusColor[employee.currentStatus]}>
                 {employee.currentStatus}

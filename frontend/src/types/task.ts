@@ -20,6 +20,7 @@ export interface Task {
   assignedToUser?: {
     firstName: string;
     lastName: string;
+    avatarUrl?: string;
   };
   createdBy: string;
   order: number;
@@ -35,6 +36,7 @@ export interface TaskWithUser extends Task {
   assignedToUser?: {
     firstName: string;
     lastName: string;
+    avatarUrl?: string;
   };
   creatorDetails?: {
     id: string;

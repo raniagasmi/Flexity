@@ -24,6 +24,7 @@ interface User {
   email: string;
   firstName?: string;
   lastName?: string;
+  avatarUrl?: string;
   role: string;
   emailVerified?: boolean;
   teamSize?: string;

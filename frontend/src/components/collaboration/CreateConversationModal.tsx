@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  Avatar,
   Badge,
   Box,
   Button,
@@ -103,14 +104,21 @@ const CreateConversationModal = ({ isOpen, isLoading, users, onClose, onSubmit }
                     {users.map((user) => (
                       <Checkbox key={user.id} value={user.id} w="full">
                         <Flex justify="space-between" align="center" ml={2} w="full" gap={3}>
-                          <Stack spacing={0}>
-                            <Text fontWeight="600">
-                              {user.firstName} {user.lastName}
-                            </Text>
-                            <Text fontSize="sm" color="gray.500">
-                              {user.email}
-                            </Text>
-                          </Stack>
+                          <Flex align="center" gap={3}>
+                            <Avatar
+                              size="sm"
+                              name={`${user.firstName} ${user.lastName}`.trim()}
+                              src={user.avatarUrl}
+                            />
+                            <Stack spacing={0}>
+                              <Text fontWeight="600">
+                                {user.firstName} {user.lastName}
+                              </Text>
+                              <Text fontSize="sm" color="gray.500">
+                                {user.email}
+                              </Text>
+                            </Stack>
+                          </Flex>
                           <Badge
                             colorScheme={presenceMeta[user.presenceStatus ?? 'OFFLINE'].colorScheme}
                             borderRadius="full"

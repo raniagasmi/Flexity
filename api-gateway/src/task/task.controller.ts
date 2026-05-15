@@ -48,7 +48,7 @@ export class TaskController {
 
     const usersById = new Map<
       string,
-      { firstName: string; lastName: string; email?: string }
+      { firstName: string; lastName: string; email?: string; avatarUrl?: string }
     >();
     await Promise.all(
       ids.map(async (id) => {
@@ -59,6 +59,7 @@ export class TaskController {
               firstName: String((user as any).firstName ?? ''),
               lastName: String((user as any).lastName ?? ''),
               email: (user as any).email,
+              avatarUrl: (user as any).avatarUrl,
             });
           }
         } catch {
@@ -76,6 +77,7 @@ export class TaskController {
           ? {
               firstName: assignedUser.firstName,
               lastName: assignedUser.lastName,
+              avatarUrl: assignedUser.avatarUrl,
             }
           : undefined,
       };

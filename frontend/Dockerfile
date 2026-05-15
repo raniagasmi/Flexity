@@ -12,7 +12,7 @@ RUN npm config set fetch-retries 10 \
 	&& npm config set fetch-retry-maxtimeout 180000 \
 	&& npm config set fetch-timeout 300000 \
 	&& npm config set registry https://registry.npmjs.org/ \
-	&& for i in 1 2 3; do npm ci --no-audit --no-fund --prefer-online && break || (echo "npm ci failed, retry $i/3" && npm cache clean --force && sleep 10); done
+	&& for i in 1 2 3; do npm ci --include=dev --no-audit --no-fund --prefer-online && break || (echo "npm ci failed, retry $i/3" && npm cache clean --force && sleep 10); done
 
 COPY . .
 

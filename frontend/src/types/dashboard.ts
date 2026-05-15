@@ -5,6 +5,7 @@ export type DashboardEmployee = {
   id: string;
   name: string;
   email: string;
+  avatarUrl?: string;
 };
 
 export type DashboardProject = {

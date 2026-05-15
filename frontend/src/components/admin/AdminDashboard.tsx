@@ -410,7 +410,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           onClick={() => handleEmployeeSelect(employee)}
                         >
                           <HStack spacing={3}>
-                            <Avatar name={employee.userName} size="sm" />
+                            <Avatar name={employee.userName} src={employee.avatarUrl} size="sm" />
                             <VStack align="start" spacing={0}>
                               <Text fontWeight="semibold">{employee.userName}</Text>
                               <Text fontSize="sm" color="gray.600">

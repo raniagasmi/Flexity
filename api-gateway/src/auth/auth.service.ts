@@ -71,18 +71,19 @@ export class AuthService {
       const token = this.jwtService.sign(payload);
       console.log('JWT token created successfully');
 
-      return {
-        access_token: token,
-        user: {
-          id: user._id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          role: user.role,
-          emailVerified: user.emailVerified,
-          teamSize: user.teamSize,
-          workspaceRole: user.workspaceRole,
-          primaryUseCase: user.primaryUseCase,
+        return {
+          access_token: token,
+          user: {
+            id: user._id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            avatarUrl: user.avatarUrl,
+            role: user.role,
+            emailVerified: user.emailVerified,
+            teamSize: user.teamSize,
+            workspaceRole: user.workspaceRole,
+            primaryUseCase: user.primaryUseCase,
           invitedTeammates: user.invitedTeammates,
           onboardingCompleted: user.onboardingCompleted,
         },
@@ -113,13 +114,14 @@ export class AuthService {
 
       const token = this.jwtService.sign(payload);
 
-      return {
+        return {
         access_token: token,
         user: {
           id: result.user._id,
           email: result.user.email,
           firstName: result.user.firstName,
           lastName: result.user.lastName,
+          avatarUrl: result.user.avatarUrl,
           role: result.user.role,
           emailVerified: result.user.emailVerified,
           teamSize: result.user.teamSize,

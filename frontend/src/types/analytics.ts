@@ -14,6 +14,7 @@ export interface EmployeeMetrics {
   userId: string;
   userName: string;
   email: string;
+  avatarUrl?: string;
 
   // Completion metrics
   tasksCompleted: number;

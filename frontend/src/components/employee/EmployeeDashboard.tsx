@@ -176,7 +176,7 @@ export const EmployeeDashboard = ({
         highPriority: number;
         completionRate: number;
         dueSoon: number;
-        colleagues: string[];
+        colleagues: Array<{ id: string; name: string; avatarUrl?: string }>;
       }>;
     }
 
@@ -215,7 +215,11 @@ export const EmployeeDashboard = ({
       const colleagueIds = Array.from(new Set(tasks.map((task) => task.assignedTo).filter(Boolean)));
       const colleagues = data.employees
         .filter((employee) => colleagueIds.includes(employee.id))
-        .map((employee) => employee.name);
+        .map((employee) => ({
+          id: employee.id,
+          name: employee.name,
+          avatarUrl: employee.avatarUrl,
+        }));
 
       return {
         id,
@@ -701,8 +705,12 @@ export const EmployeeDashboard = ({
 
                           <Text fontSize="xs" color="gray.500" mb={2}>Teammates</Text>
                           {project.colleagues.length > 0 ? (
-                            <Tooltip label={project.colleagues.join(', ')} placement="top" hasArrow>
-                              <Avatar size="sm" name={project.colleagues[0]} />
+                            <Tooltip label={project.colleagues.map((colleague) => colleague.name).join(', ')} placement="top" hasArrow>
+                              <Avatar
+                                size="sm"
+                                name={project.colleagues[0].name}
+                                src={project.colleagues[0].avatarUrl}
+                              />
                             </Tooltip>
                           ) : (
                             <Text fontSize="sm" color="gray.500">No teammates mapped</Text>
