@@ -36,6 +36,7 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import { RepeatIcon } from '@chakra-ui/icons';
+import { useNavigate } from 'react-router-dom';
 import { useAdminDashboard, useTimeTracking } from '../../hooks/useAdminMetrics';
 import { EmployeeMetricsGrid } from './EmployeeMetricsCard';
 import { AlertsPanel } from './AlertsPanel';
@@ -52,6 +53,8 @@ import { Board } from '../tasks/Board';
 
 interface AdminDashboardProps {
   isAdmin: boolean;
+  section?: 'dashboard' | 'team-analytics' | 'tasks';
+  initialTaskTab?: keyof typeof TAB_INDEX;
   focusBoard?: boolean;
   mobileNavTrigger?: React.ReactNode;
 }
@@ -192,15 +195,21 @@ const DashboardOverview: React.FC<{ dashboardData: AdminDashboardData | null; is
 /**
  * Main admin dashboard
  */
-export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isAdmin, focusBoard = false, mobileNavTrigger }) => {
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({
+  isAdmin,
+  section = 'dashboard',
+  initialTaskTab = 'employees',
+  focusBoard = false,
+  mobileNavTrigger,
+}) => {
+  const navigate = useNavigate();
   const [refreshKey, setRefreshKey] = useState(0);
   const { dashboardData, isLoading, error } = useAdminDashboard(isAdmin, refreshKey);
   const { currentStatus, togglePause } = useTimeTracking(
     authService.getCurrentUser()?.id
   );
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeMetrics | null>(null);
-  const [tabIndex, setTabIndex] = useState(TAB_INDEX.board);
-  const [activeView, setActiveView] = useState<keyof typeof TAB_INDEX | null>(focusBoard ? 'board' : null);
+  const [tabIndex, setTabIndex] = useState(TAB_INDEX[focusBoard ? 'board' : initialTaskTab]);
   const boardSectionRef = useRef<HTMLDivElement | null>(null);
   const { isOpen: isEmployeeDrawerOpen, onOpen: onEmployeeDrawerOpen, onClose: onEmployeeDrawerClose } = useDisclosure();
   const toast = useToast();
@@ -245,9 +254,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isAdmin, focusBo
     setRefreshKey((current) => current + 1);
   };
 
-  const activateView = (view: keyof typeof TAB_INDEX) => {
-    setActiveView(view);
+  const tabKeyByIndex = Object.entries(TAB_INDEX).reduce<Record<number, keyof typeof TAB_INDEX>>((acc, [key, value]) => {
+    acc[value] = key as keyof typeof TAB_INDEX;
+    return acc;
+  }, {});
+
+  const openTasksSection = (view: keyof typeof TAB_INDEX) => {
     setTabIndex(TAB_INDEX[view]);
+    navigate(`/app?section=tasks&tab=${view}`);
+  };
+
+  const handleTaskTabChange = (nextIndex: number) => {
+    setTabIndex(nextIndex);
+    const nextTab = tabKeyByIndex[nextIndex];
+    if (nextTab) {
+      navigate(`/app?section=tasks&tab=${nextTab}`);
+    }
   };
 
   const handleEmployeeSelect = (employee: EmployeeMetrics) => {
@@ -256,16 +278,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isAdmin, focusBo
   };
 
   useEffect(() => {
-    if (focusBoard) {
-      activateView('board');
-      return;
-    }
-
-    setActiveView(null);
-  }, [focusBoard]);
+    setTabIndex(TAB_INDEX[focusBoard ? 'board' : initialTaskTab]);
+  }, [focusBoard, initialTaskTab]);
 
   useEffect(() => {
-    if (!focusBoard || tabIndex !== TAB_INDEX.board) {
+    if (section !== 'tasks' || tabIndex !== TAB_INDEX.board) {
       return;
     }
 
@@ -274,7 +291,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isAdmin, focusBo
     });
 
     return () => window.cancelAnimationFrame(raf);
-  }, [focusBoard, tabIndex]);
+  }, [section, tabIndex]);
 
   if (!isAdmin) {
     return (
@@ -295,6 +312,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isAdmin, focusBo
     );
   }
 
+  const pageTitle =
+    section === 'team-analytics'
+      ? 'Team analytics'
+      : section === 'tasks'
+        ? 'Tasks'
+        : 'Admin Intelligence Dashboard';
+
+  const pageDescription =
+    section === 'team-analytics'
+      ? 'Snapshot charts for delivery, alerts, hiring, and burndown trends'
+      : section === 'tasks'
+        ? 'Employees, projects, alerts, and task board in one admin workspace'
+        : 'Real-time team analytics and workload management';
+
   return (
     <Box>
       {/* Header */}
@@ -302,9 +333,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isAdmin, focusBo
         <HStack align="start" spacing={3}>
           {mobileNavTrigger}
           <VStack align="start" spacing={1}>
-            <Heading size="lg">Admin Intelligence Dashboard</Heading>
+            <Heading size="lg">{pageTitle}</Heading>
             <Text fontSize="sm" color="gray.600">
-              Real-time team analytics and workload management
+              {pageDescription}
             </Text>
           </VStack>
         </HStack>
@@ -336,90 +367,83 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isAdmin, focusBo
         </HStack>
       </Flex>
 
-      {/* Overview Stats */}
-      <DashboardOverview dashboardData={dashboardData} isLoading={isLoading} />
+      {section === 'dashboard' ? (
+        <>
+          <DashboardOverview dashboardData={dashboardData} isLoading={isLoading} />
 
-      <SimpleGrid columns={{ base: 1, xl: 2 }} spacing={6} mb={6}>
-        <Skeleton isLoaded={!isLoading} borderRadius="lg">
-          <AlertsPanel
-            alerts={dashboardData?.alerts ?? []}
-            onResolve={(alert) => handleResolveAlert(alert.id)}
-            maxUnresolvedItems={5}
-            onViewAllAlerts={() => activateView('alerts')}
-            previewTitle="Priority Alerts"
-          />
-        </Skeleton>
+          <SimpleGrid columns={{ base: 1 }} spacing={6} mb={6}>
+            <Skeleton isLoaded={!isLoading} borderRadius="lg">
+              <Box bg="white" borderRadius="lg" p={4} boxShadow="sm" minH="260px">
+                <Flex justify="space-between" align="center" mb={4}>
+                  <VStack align="start" spacing={0}>
+                    <Heading size="md">Team Load Watchlist</Heading>
+                    <Text fontSize="sm" color="gray.600">
+                      Highest current task pressure across the team
+                    </Text>
+                  </VStack>
+                  <Button size="sm" variant="ghost" colorScheme="blue" onClick={() => openTasksSection('employees')}>
+                    View all employees
+                  </Button>
+                </Flex>
 
-        <Skeleton isLoaded={!isLoading} borderRadius="lg">
-          <Box bg="white" borderRadius="lg" p={4} boxShadow="sm" minH="260px">
-            <Flex justify="space-between" align="center" mb={4}>
-              <VStack align="start" spacing={0}>
-                <Heading size="md">Team Load Watchlist</Heading>
-                <Text fontSize="sm" color="gray.600">
-                  Highest current task pressure across the team
-                </Text>
-              </VStack>
-              <Button size="sm" variant="ghost" colorScheme="blue" onClick={() => activateView('employees')}>
-                View all employees
-              </Button>
-            </Flex>
+                <Stack spacing={3}>
+                  {topEmployees.length === 0 ? (
+                    <Text color="gray.500" textAlign="center" py={8}>
+                      No employee load data available yet.
+                    </Text>
+                  ) : (
+                    topEmployees.map((employee) => {
+                      const workloadBadge = getWorkloadBadge(employee);
 
-            <Stack spacing={3}>
-              {topEmployees.length === 0 ? (
-                <Text color="gray.500" textAlign="center" py={8}>
-                  No employee load data available yet.
-                </Text>
-              ) : (
-                topEmployees.map((employee) => {
-                  const workloadBadge = getWorkloadBadge(employee);
+                      return (
+                        <Flex
+                          key={employee.userId}
+                          p={3}
+                          borderWidth="1px"
+                          borderColor="gray.200"
+                          borderRadius="md"
+                          align="center"
+                          justify="space-between"
+                          gap={3}
+                          cursor="pointer"
+                          _hover={{ borderColor: 'blue.300', shadow: 'sm' }}
+                          onClick={() => handleEmployeeSelect(employee)}
+                        >
+                          <HStack spacing={3}>
+                            <Avatar name={employee.userName} size="sm" />
+                            <VStack align="start" spacing={0}>
+                              <Text fontWeight="semibold">{employee.userName}</Text>
+                              <Text fontSize="sm" color="gray.600">
+                                {employee.taskCount} active tasks
+                              </Text>
+                            </VStack>
+                          </HStack>
+                          <Badge colorScheme={workloadBadge.colorScheme} px={2} py={1} borderRadius="full">
+                            {workloadBadge.label}
+                          </Badge>
+                        </Flex>
+                      );
+                    })
+                  )}
+                </Stack>
 
-                  return (
-                    <Flex
-                      key={employee.userId}
-                      p={3}
-                      borderWidth="1px"
-                      borderColor="gray.200"
-                      borderRadius="md"
-                      align="center"
-                      justify="space-between"
-                      gap={3}
-                      cursor="pointer"
-                      _hover={{ borderColor: 'blue.300', shadow: 'sm' }}
-                      onClick={() => handleEmployeeSelect(employee)}
-                    >
-                      <HStack spacing={3}>
-                        <Avatar name={employee.userName} size="sm" />
-                        <VStack align="start" spacing={0}>
-                          <Text fontWeight="semibold">{employee.userName}</Text>
-                          <Text fontSize="sm" color="gray.600">
-                            {employee.taskCount} active tasks
-                          </Text>
-                        </VStack>
-                      </HStack>
-                      <Badge colorScheme={workloadBadge.colorScheme} px={2} py={1} borderRadius="full">
-                        {workloadBadge.label}
-                      </Badge>
-                    </Flex>
-                  );
-                })
-              )}
-            </Stack>
+                <HStack spacing={3} mt={6} flexWrap="wrap">
+                  <Button colorScheme="blue" variant="outline" onClick={() => openTasksSection('projects')}>
+                    View all projects
+                  </Button>
+                  <Button colorScheme="blue" onClick={() => openTasksSection('board')}>
+                    Open board
+                  </Button>
+                </HStack>
+              </Box>
+            </Skeleton>
+          </SimpleGrid>
+        </>
+      ) : null}
 
-            <HStack spacing={3} mt={6} flexWrap="wrap">
-              <Button colorScheme="blue" variant="outline" onClick={() => activateView('projects')}>
-                View all projects
-              </Button>
-              <Button colorScheme="blue" onClick={() => activateView('board')}>
-                Open board
-              </Button>
-            </HStack>
-          </Box>
-        </Skeleton>
-      </SimpleGrid>
-
-      {activeView ? (
+      {section === 'tasks' ? (
         <Box bg="white" borderRadius="lg" p={4} boxShadow="sm">
-          <Tabs colorScheme="blue" isLazy index={tabIndex} onChange={setTabIndex}>
+          <Tabs colorScheme="blue" isLazy index={tabIndex} onChange={handleTaskTabChange}>
             <Flex justify="space-between" align="center" mb={4} gap={3} flexWrap="wrap">
               <TabList>
                 <Tab>Employees</Tab>
@@ -434,8 +458,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isAdmin, focusBo
                 </Tab>
                 <Tab>Task Board</Tab>
               </TabList>
-              <Link color="blue.500" fontWeight="medium" onClick={() => setActiveView(null)}>
-                Back to command center
+              <Link color="blue.500" fontWeight="medium" onClick={() => navigate('/app')}>
+                Back to dashboard
               </Link>
             </Flex>
 
@@ -486,44 +510,39 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isAdmin, focusBo
         </Box>
       ) : null}
 
-      <Box mt={6}>
-        <VStack align="start" spacing={1} mb={4}>
-          <Heading size="md">Team analytics</Heading>
-          <Text fontSize="sm" color="gray.600">
-            Snapshot charts for delivery, alerts, hiring, and burndown trends
-          </Text>
-        </VStack>
+      {section === 'team-analytics' ? (
+        <Box mt={6}>
+          <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={4}>
+            <Box bg="white" borderRadius="lg" p={4} boxShadow="sm">
+              <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={3}>
+                Task completion - last 7 days
+              </Text>
+              <TaskCompletionTrendChart />
+            </Box>
 
-        <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={4}>
-          <Box bg="white" borderRadius="lg" p={4} boxShadow="sm">
-            <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={3}>
-              Task completion - last 7 days
-            </Text>
-            <TaskCompletionTrendChart />
-          </Box>
+            <Box bg="white" borderRadius="lg" p={4} boxShadow="sm">
+              <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={3}>
+                Alert volume - last 14 days
+              </Text>
+              <AlertVolumeChart />
+            </Box>
 
-          <Box bg="white" borderRadius="lg" p={4} boxShadow="sm">
-            <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={3}>
-              Alert volume - last 14 days
-            </Text>
-            <AlertVolumeChart />
-          </Box>
+            <Box bg="white" borderRadius="lg" p={4} boxShadow="sm">
+              <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={3}>
+                Hiring funnel
+              </Text>
+              <HiringFunnelChart />
+            </Box>
 
-          <Box bg="white" borderRadius="lg" p={4} boxShadow="sm">
-            <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={3}>
-              Hiring funnel
-            </Text>
-            <HiringFunnelChart />
-          </Box>
-
-          <Box bg="white" borderRadius="lg" p={4} boxShadow="sm">
-            <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={3}>
-              Project burndown - last 4 weeks
-            </Text>
-            <ProjectBurndownChart />
-          </Box>
-        </SimpleGrid>
-      </Box>
+            <Box bg="white" borderRadius="lg" p={4} boxShadow="sm">
+              <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={3}>
+                Project burndown - last 4 weeks
+              </Text>
+              <ProjectBurndownChart />
+            </Box>
+          </SimpleGrid>
+        </Box>
+      ) : null}
 
       <Drawer isOpen={isEmployeeDrawerOpen} placement="right" onClose={onEmployeeDrawerClose} size="md">
         <DrawerOverlay />

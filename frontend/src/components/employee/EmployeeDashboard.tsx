@@ -34,10 +34,12 @@ import { collaborationService } from '../../services/collaboration.service';
 import TaskActionPanel, { TaskActionComment, TaskDecision } from '../tasks/TaskActionPanel';
 import { Task as TaskType } from '../../types/task';
 
-export type EmployeeDashboardSection = 'tasks' | 'projects' | 'calendar' | 'alerts';
+export type EmployeeDashboardSection = 'tasks' | 'projects' | 'calendar';
+export type EmployeeTaskView = 'board' | 'alerts';
 
 interface EmployeeDashboardProps {
   initialSection?: EmployeeDashboardSection;
+  initialTaskView?: EmployeeTaskView;
   focusBoard?: boolean;
   mobileNavTrigger?: React.ReactNode;
 }
@@ -72,7 +74,12 @@ const EmptyState = ({ icon: Icon, title, buttonLabel, onAction }: EmptyStateProp
   </VStack>
 );
 
-export const EmployeeDashboard = ({ initialSection = 'tasks', focusBoard = false, mobileNavTrigger }: EmployeeDashboardProps) => {
+export const EmployeeDashboard = ({
+  initialSection = 'tasks',
+  initialTaskView = 'board',
+  focusBoard = false,
+  mobileNavTrigger,
+}: EmployeeDashboardProps) => {
   const currentUserId = authService.getCurrentUser()?.id;
   const { currentStatus, focusTime, togglePause } = useTimeTracking(currentUserId);
   const toast = useToast();
@@ -83,6 +90,7 @@ export const EmployeeDashboard = ({ initialSection = 'tasks', focusBoard = false
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [currentSection, setCurrentSection] = useState<EmployeeDashboardSection>(initialSection);
+  const [currentTaskView, setCurrentTaskView] = useState<EmployeeTaskView>(initialTaskView);
   const [selectedTask, setSelectedTask] = useState<TaskType | null>(null);
   const [taskComments, setTaskComments] = useState<TaskActionComment[]>([]);
   const [taskDecision, setTaskDecision] = useState<TaskDecision | null>(null);
@@ -140,7 +148,11 @@ export const EmployeeDashboard = ({ initialSection = 'tasks', focusBoard = false
   }, [focusBoard, initialSection]);
 
   useEffect(() => {
-    if (!focusBoard || currentSection !== 'tasks' || !data) {
+    setCurrentTaskView(focusBoard ? 'board' : initialTaskView);
+  }, [focusBoard, initialTaskView]);
+
+  useEffect(() => {
+    if (!focusBoard || currentSection !== 'tasks' || currentTaskView !== 'board' || !data) {
       return;
     }
 
@@ -149,7 +161,7 @@ export const EmployeeDashboard = ({ initialSection = 'tasks', focusBoard = false
     });
 
     return () => window.cancelAnimationFrame(raf);
-  }, [focusBoard, currentSection, data]);
+  }, [focusBoard, currentSection, currentTaskView, data]);
 
   const projectInsights = useMemo(() => {
     if (!data) {
@@ -545,15 +557,14 @@ export const EmployeeDashboard = ({ initialSection = 'tasks', focusBoard = false
             </Box>
           )}
 
-          {/* Header controls: show for Tasks and Alerts sections only */}
-          {(currentSection === 'tasks' || currentSection === 'alerts') && (
+          {currentSection === 'tasks' && (
             <Box px={6} py={4} bg="linear-gradient(135deg, rgba(16, 185, 129, 0.02), rgba(59, 130, 246, 0.02))" borderBottomWidth="2px" borderColor="gray.100">
               <HStack spacing={4} align="center">
-                <Button variant={currentSection === 'tasks' ? 'solid' : 'ghost'} colorScheme="teal" onClick={() => setCurrentSection('tasks')}>
+                <Button variant={currentTaskView === 'board' ? 'solid' : 'ghost'} colorScheme="teal" onClick={() => setCurrentTaskView('board')}>
                   Tasks
                 </Button>
 
-                <Button variant={currentSection === 'alerts' ? 'solid' : 'ghost'} colorScheme="teal" onClick={() => setCurrentSection('alerts')}>
+                <Button variant={currentTaskView === 'alerts' ? 'solid' : 'ghost'} colorScheme="teal" onClick={() => setCurrentTaskView('alerts')}>
                   Alerts
                   {unresolvedAlertsCount > 0 && (
                     <Badge ml={2} colorScheme="red" borderRadius="full">
@@ -566,7 +577,7 @@ export const EmployeeDashboard = ({ initialSection = 'tasks', focusBoard = false
           )}
 
           <Box p={6}>
-            {currentSection === 'tasks' && (
+            {currentSection === 'tasks' && currentTaskView === 'board' && (
               <Fade in={true}>
                 {isLoading ? (
                   <Stack spacing={4}>
@@ -588,7 +599,7 @@ export const EmployeeDashboard = ({ initialSection = 'tasks', focusBoard = false
               </Fade>
             )}
 
-            {currentSection === 'alerts' && (
+            {currentSection === 'tasks' && currentTaskView === 'alerts' && (
               <Fade in={true}>
                 <Box>
                   {isLoading ? (

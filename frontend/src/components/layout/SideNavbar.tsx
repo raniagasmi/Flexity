@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Badge, Box, Button, Flex, Image, Stack } from '@chakra-ui/react';
 import {
@@ -14,7 +13,6 @@ import {
   type TablerIcon,
 } from '@tabler/icons-react';
 import { authService } from '../../services/auth.service';
-import { dashboardService } from '../../services/dashboard.service';
 import { UserRole } from '../../types/user';
 import logoImage from '../../assets/images/logo.png';
 
@@ -23,8 +21,6 @@ interface SideNavbarProps {
   onNavigate?: () => void;
   isInDrawer?: boolean;
 }
-
-type EmployeeNavSection = 'tasks' | 'projects' | 'calendar' | 'alerts';
 
 interface NavItem {
   label: string;
@@ -44,36 +40,7 @@ const SideNavbar = ({ onLogoutClick, onNavigate, isInDrawer = false }: SideNavba
   const location = useLocation();
   const currentUser = authService.getCurrentUser();
   const isAdmin = currentUser?.role?.toLowerCase() === UserRole.ADMIN;
-  const currentSection = (new URLSearchParams(location.search).get('section') ?? 'tasks') as EmployeeNavSection;
-  const [employeeAlertCount, setEmployeeAlertCount] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (isAdmin) {
-      setEmployeeAlertCount(null);
-      return;
-    }
-
-    let cancelled = false;
-
-    const loadAlertCount = async () => {
-      try {
-        const payload = await dashboardService.getMyDashboard();
-        if (!cancelled) {
-          setEmployeeAlertCount(payload.alerts.filter((alert) => !alert.isResolved).length);
-        }
-      } catch {
-        if (!cancelled) {
-          setEmployeeAlertCount(null);
-        }
-      }
-    };
-
-    void loadAlertCount();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isAdmin]);
+  const currentSection = new URLSearchParams(location.search).get('section');
 
   const navigateTo = (path: string) => {
     navigate(path);
@@ -87,7 +54,7 @@ const SideNavbar = ({ onLogoutClick, onNavigate, isInDrawer = false }: SideNavba
         {
           label: 'Tasks',
           icon: IconLayoutDashboard,
-          isActive: location.pathname === '/app' && currentSection === 'tasks',
+          isActive: location.pathname === '/app' && (!currentSection || currentSection === 'tasks'),
           onClick: () => navigateTo('/app'),
         },
         {
@@ -113,13 +80,6 @@ const SideNavbar = ({ onLogoutClick, onNavigate, isInDrawer = false }: SideNavba
           isActive: location.pathname === '/collaboration',
           onClick: () => navigateTo('/collaboration'),
         },
-        {
-          label: 'Alerts',
-          icon: IconBell,
-          isActive: location.pathname === '/app' && currentSection === 'alerts',
-          onClick: () => navigateTo('/app?section=alerts'),
-          count: employeeAlertCount ?? undefined,
-        },
       ],
     },
   ];
@@ -131,7 +91,7 @@ const SideNavbar = ({ onLogoutClick, onNavigate, isInDrawer = false }: SideNavba
         {
           label: 'Dashboard',
           icon: IconLayoutDashboard,
-          isActive: location.pathname === '/app' && currentSection !== 'alerts',
+          isActive: location.pathname === '/app' && (!currentSection || currentSection === 'dashboard'),
           onClick: () => navigateTo('/app'),
         },
       ],
@@ -140,16 +100,22 @@ const SideNavbar = ({ onLogoutClick, onNavigate, isInDrawer = false }: SideNavba
       label: 'Team',
       items: [
         {
+          label: 'Tasks',
+          icon: IconBell,
+          isActive: location.pathname === '/app' && currentSection === 'tasks',
+          onClick: () => navigateTo('/app?section=tasks'),
+        },
+        {
+          label: 'Team analytics',
+          icon: IconFolder,
+          isActive: location.pathname === '/app' && currentSection === 'team-analytics',
+          onClick: () => navigateTo('/app?section=team-analytics'),
+        },
+        {
           label: 'Collaboration',
           icon: IconMessages,
           isActive: location.pathname === '/collaboration',
           onClick: () => navigateTo('/collaboration'),
-        },
-        {
-          label: 'Alerts',
-          icon: IconBell,
-          isActive: location.pathname === '/app' && currentSection === 'alerts',
-          onClick: () => navigateTo('/app?section=alerts'),
         },
       ],
     },
