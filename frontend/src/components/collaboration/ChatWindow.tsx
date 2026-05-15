@@ -191,9 +191,12 @@ const ChatWindow = ({
                     const user = usersById[participant.userId] ?? participant.user;
                     const presenceStatus = user?.presenceStatus ?? 'OFFLINE';
                     const presenceText = presenceStatus === 'ONLINE' ? '🟢' : presenceStatus === 'PAUSE' ? '🟡' : '⚪';
+                    const presenceLabel = presenceStatus === 'ONLINE' ? 'Online' : presenceStatus === 'PAUSE' ? 'Paused' : 'Offline';
                     return (
                       <HStack key={participant.userId} spacing={2} fontSize="sm">
-                        <Box fontSize="xs">{presenceText}</Box>
+                        <Box fontSize="xs">
+                          <span role="img" aria-label={presenceLabel}>{presenceText}</span>
+                        </Box>
                         <Text>{user ? `${user.firstName} ${user.lastName}` : participant.fullName ?? participant.role}</Text>
                       </HStack>
                     );

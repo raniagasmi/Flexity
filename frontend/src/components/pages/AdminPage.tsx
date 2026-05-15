@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
   Badge,
   Box,
   Button,
@@ -18,7 +22,9 @@ import {
   ModalHeader,
   ModalOverlay,
   Select,
+  Skeleton,
   Stack,
+  TableCaption,
   Table,
   Tbody,
   Td,
@@ -32,7 +38,9 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { DeleteIcon, EditIcon, Search2Icon, ViewIcon } from '@chakra-ui/icons';
+import { Link as RouterLink } from 'react-router-dom';
 import SideNavbar from '../layout/SideNavbar';
+import MobileSidebarDrawer from '../layout/MobileSidebarDrawer';
 import { userService } from '../../services/user.service';
 import { auditService, type AuditLogEntry } from '../../services/audit.service';
 import { User, UserRole } from '../../types/user';
@@ -197,10 +205,26 @@ const AdminPage = () => {
 
   return (
     <Flex minH="100vh" bg="linear-gradient(180deg, #f8fbff 0%, #eef4ff 45%, #f7f7fb 100%)">
-      <SideNavbar onLogoutClick={handleLogout} />
+      <Box display={{ base: 'none', md: 'block' }}>
+        <SideNavbar onLogoutClick={handleLogout} />
+      </Box>
 
       <Box flex={1} px={{ base: 4, md: 6, xl: 10 }} py={{ base: 8, md: 12 }} maxW="1400px" mx="auto">
         <Stack spacing={3} mb={8}>
+          <HStack>
+            <MobileSidebarDrawer onLogoutClick={handleLogout} />
+          </HStack>
+          <Breadcrumb fontSize="sm" color="gray.500">
+            <BreadcrumbItem>
+              <BreadcrumbLink as={RouterLink} to="/admin" color="teal.600">
+                Admin
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem isCurrentPage>
+              <BreadcrumbLink color="gray.700">Users & roles</BreadcrumbLink>
+            </BreadcrumbItem>
+          </Breadcrumb>
           <Badge alignSelf="flex-start" colorScheme="teal" borderRadius="full" px={3} py={1}>
             Admin console
           </Badge>
@@ -220,6 +244,7 @@ const AdminPage = () => {
 
           <Box overflowX="auto">
             <Table variant="simple">
+              <TableCaption placement="top">User directory with role and account management actions.</TableCaption>
               <Thead bg="gray.50">
                 <Tr>
                   <Th>Name</Th>
@@ -230,9 +255,21 @@ const AdminPage = () => {
               </Thead>
               <Tbody>
                 {loading ? (
-                  <Tr>
-                    <Td colSpan={4}><Text color="gray.500">Loading users...</Text></Td>
-                  </Tr>
+                  Array.from({ length: 5 }).map((_, index) => (
+                    <Tr key={`user-skeleton-${index}`} h="48px">
+                      <Td><Skeleton height="20px" /></Td>
+                      <Td><Skeleton height="20px" /></Td>
+                      <Td><Skeleton height="20px" width="90px" /></Td>
+                      <Td>
+                        <HStack justify="flex-end" spacing={2}>
+                          <Skeleton height="32px" width="32px" borderRadius="md" />
+                          <Skeleton height="32px" width="32px" borderRadius="md" />
+                          <Skeleton height="32px" width="32px" borderRadius="md" />
+                          <Skeleton height="32px" width="32px" borderRadius="md" />
+                        </HStack>
+                      </Td>
+                    </Tr>
+                  ))
                 ) : users.length === 0 ? (
                   <Tr>
                     <Td colSpan={4}><Text color="gray.500">No users found.</Text></Td>

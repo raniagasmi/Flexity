@@ -110,7 +110,7 @@ export const useTimeTracking = (userId?: string) => {
   return { currentStatus, focusTime: 0, pauseTime: 0, togglePause };
 };
 
-export const useEmployeeMetrics = (shouldLoad: boolean = false) => {
+export const useEmployeeMetrics = (shouldLoad: boolean = false, refreshKey: number = 0) => {
   const [employees, setEmployees] = useState<EmployeeMetrics[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -169,12 +169,12 @@ export const useEmployeeMetrics = (shouldLoad: boolean = false) => {
       cleanupPresenceListener();
       clearInterval(interval);
     };
-  }, [shouldLoad]);
+  }, [shouldLoad, refreshKey]);
 
   return { employees, loading, error, refetch: () => {} };
 };
 
-export const useProjectMetrics = (shouldLoad: boolean = false) => {
+export const useProjectMetrics = (shouldLoad: boolean = false, refreshKey: number = 0) => {
   const [projects, setProjects] = useState<ProjectMetrics[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -239,7 +239,7 @@ export const useProjectMetrics = (shouldLoad: boolean = false) => {
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [shouldLoad]);
+  }, [shouldLoad, refreshKey]);
 
   return { projects, loading, error };
 };
@@ -247,7 +247,8 @@ export const useProjectMetrics = (shouldLoad: boolean = false) => {
 export const useAdminAlerts = (
   shouldLoad: boolean = false,
   employeeMetrics: EmployeeMetrics[] = [],
-  projectMetrics: ProjectMetrics[] = []
+  projectMetrics: ProjectMetrics[] = [],
+  refreshKey: number = 0
 ) => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
@@ -288,18 +289,19 @@ export const useAdminAlerts = (
     }, 60000);
 
     return () => clearInterval(interval);
-  }, [shouldLoad, employeeMetrics, projectMetrics]);
+  }, [shouldLoad, employeeMetrics, projectMetrics, refreshKey]);
 
   return { alerts, loading, error };
 };
 
-export const useAdminDashboard = (isAdmin: boolean = false) => {
-  const { employees, loading: empLoading, error: empError } = useEmployeeMetrics(isAdmin);
-  const { projects, loading: projLoading, error: projError } = useProjectMetrics(isAdmin);
+export const useAdminDashboard = (isAdmin: boolean = false, refreshKey: number = 0) => {
+  const { employees, loading: empLoading, error: empError } = useEmployeeMetrics(isAdmin, refreshKey);
+  const { projects, loading: projLoading, error: projError } = useProjectMetrics(isAdmin, refreshKey);
   const { alerts, loading: alertLoading, error: alertError } = useAdminAlerts(
     isAdmin,
     employees,
-    projects
+    projects,
+    refreshKey
   );
 
   const [dashboardData, setDashboardData] = useState<AdminDashboardData | null>(null);
@@ -334,7 +336,7 @@ export const useAdminDashboard = (isAdmin: boolean = false) => {
       void loadTasks();
     }, 30000);
     return () => clearInterval(interval);
-  }, [isAdmin]);
+  }, [isAdmin, refreshKey]);
 
   useEffect(() => {
     if (!isAdmin || empLoading || projLoading || alertLoading || tasksLoading) {

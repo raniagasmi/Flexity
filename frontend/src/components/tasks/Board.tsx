@@ -608,10 +608,18 @@ export const Board: React.FC<BoardProps> = ({ showControls = true, onTaskSelect,
       {showControls && currentUserId && (
         <HStack justify="center" mb={4} spacing={3}>
           <Button size="sm" colorScheme={currentStatus === "PAUSE" ? "orange" : "green"} onClick={togglePause}>
-            {currentStatus === "PAUSE" ? "▶️ Resume" : "⏸️ Pause"}
+            {currentStatus === "PAUSE" ? (
+              <>
+                <span role="img" aria-label="Resume time tracking">▶️</span> Resume
+              </>
+            ) : (
+              <>
+                <span role="img" aria-label="Pause time tracking">⏸️</span> Pause
+              </>
+            )}
           </Button>
           <IconButton
-            aria-label="Refresh"
+            aria-label="Refresh task board"
             icon={<RepeatIcon />}
             size="sm"
             colorScheme="blue"
@@ -656,6 +664,7 @@ export const Board: React.FC<BoardProps> = ({ showControls = true, onTaskSelect,
             <ArchiveZone onArchive={handleArchiveTask} />
             <Flex justify="center" mt={2}>
               <Button
+                aria-label={showArchivedTasks ? 'Hide archived tasks' : 'Show archived tasks'}
                 onClick={() => setShowArchivedTasks((prev) => !prev)}
                 variant="outline"
                 colorScheme="orange"

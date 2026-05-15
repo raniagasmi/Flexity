@@ -1,70 +1,189 @@
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Badge, Box, Button, Flex, Image, Stack } from '@chakra-ui/react';
+import {
+  IconBell,
+  IconBriefcase,
+  IconCalendar,
+  IconFolder,
+  IconLayoutDashboard,
+  IconMessages,
+  IconUserCircle,
+  IconUserShield as IconShieldPerson,
+  IconUsersGroup,
+  type TablerIcon,
+} from '@tabler/icons-react';
 import { authService } from '../../services/auth.service';
+import { dashboardService } from '../../services/dashboard.service';
 import { UserRole } from '../../types/user';
 import logoImage from '../../assets/images/logo.png';
 
 interface SideNavbarProps {
   onLogoutClick?: () => void;
+  onNavigate?: () => void;
+  isInDrawer?: boolean;
 }
 
-type EmployeeNavSection = 'tasks' | 'projects' | 'calendar';
+type EmployeeNavSection = 'tasks' | 'projects' | 'calendar' | 'alerts';
 
-const SideNavbar = ({ onLogoutClick }: SideNavbarProps) => {
+interface NavItem {
+  label: string;
+  icon: TablerIcon;
+  isActive: boolean;
+  onClick: () => void;
+  count?: number;
+}
+
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+const SideNavbar = ({ onLogoutClick, onNavigate, isInDrawer = false }: SideNavbarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const currentUser = authService.getCurrentUser();
   const isAdmin = currentUser?.role?.toLowerCase() === UserRole.ADMIN;
   const currentSection = (new URLSearchParams(location.search).get('section') ?? 'tasks') as EmployeeNavSection;
+  const [employeeAlertCount, setEmployeeAlertCount] = useState<number | null>(null);
 
-  const employeeNavItems = [
-    {
-      label: 'Tasks',
-      isActive: location.pathname === '/app' && currentSection === 'tasks',
+  useEffect(() => {
+    if (isAdmin) {
+      setEmployeeAlertCount(null);
+      return;
+    }
 
-      onClick: () => navigate('/app'),
+    let cancelled = false;
+
+    const loadAlertCount = async () => {
+      try {
+        const payload = await dashboardService.getMyDashboard();
+        if (!cancelled) {
+          setEmployeeAlertCount(payload.alerts.filter((alert) => !alert.isResolved).length);
+        }
+      } catch {
+        if (!cancelled) {
+          setEmployeeAlertCount(null);
+        }
+      }
+    };
+
+    void loadAlertCount();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin]);
+
+  const navigateTo = (path: string) => {
+    navigate(path);
+    onNavigate?.();
+  };
+
+  const employeeNavGroups: NavGroup[] = [
+    {
+      label: 'Work',
+      items: [
+        {
+          label: 'Tasks',
+          icon: IconLayoutDashboard,
+          isActive: location.pathname === '/app' && currentSection === 'tasks',
+          onClick: () => navigateTo('/app'),
+        },
+        {
+          label: 'Projects',
+          icon: IconFolder,
+          isActive: location.pathname === '/app' && currentSection === 'projects',
+          onClick: () => navigateTo('/app?section=projects'),
+        },
+        {
+          label: 'Calendar',
+          icon: IconCalendar,
+          isActive: location.pathname === '/app' && currentSection === 'calendar',
+          onClick: () => navigateTo('/app?section=calendar'),
+        },
+      ],
     },
     {
-      label: 'Projects',
-      isActive: location.pathname === '/app' && currentSection === 'projects',
-      onClick: () => navigate('/app?section=projects'),
-    },
-    {
-      label: 'Calendar',
-      isActive: location.pathname === '/app' && currentSection === 'calendar',
-      onClick: () => navigate('/app?section=calendar'),
-    },
-    {
-      label: 'Collaboration',
-      isActive: location.pathname === '/collaboration',
-      onClick: () => navigate('/collaboration'),
+      label: 'Team',
+      items: [
+        {
+          label: 'Collaboration',
+          icon: IconMessages,
+          isActive: location.pathname === '/collaboration',
+          onClick: () => navigateTo('/collaboration'),
+        },
+        {
+          label: 'Alerts',
+          icon: IconBell,
+          isActive: location.pathname === '/app' && currentSection === 'alerts',
+          onClick: () => navigateTo('/app?section=alerts'),
+          count: employeeAlertCount ?? undefined,
+        },
+      ],
     },
   ];
 
-  const adminNavItems = [
+  const adminNavGroups: NavGroup[] = [
     {
-      label: 'Tasks',
-      isActive: location.pathname === '/app',
-      onClick: () => navigate('/app'),
+      label: 'Overview',
+      items: [
+        {
+          label: 'Dashboard',
+          icon: IconLayoutDashboard,
+          isActive: location.pathname === '/app' && currentSection !== 'alerts',
+          onClick: () => navigateTo('/app'),
+        },
+      ],
     },
     {
-      label: 'Collaboration',
-      isActive: location.pathname === '/collaboration',
-      onClick: () => navigate('/collaboration'),
+      label: 'Team',
+      items: [
+        {
+          label: 'Collaboration',
+          icon: IconMessages,
+          isActive: location.pathname === '/collaboration',
+          onClick: () => navigateTo('/collaboration'),
+        },
+        {
+          label: 'Alerts',
+          icon: IconBell,
+          isActive: location.pathname === '/app' && currentSection === 'alerts',
+          onClick: () => navigateTo('/app?section=alerts'),
+        },
+      ],
     },
     {
-      label: 'Recruitment',
-      isActive: location.pathname === '/admin/recruitment',
-      onClick: () => navigate('/admin/recruitment'),
+      label: 'Hiring',
+      items: [
+        {
+          label: 'Job studio',
+          icon: IconBriefcase,
+          isActive: location.pathname === '/recruitment',
+          onClick: () => navigateTo('/recruitment'),
+        },
+        {
+          label: 'Hiring pipeline',
+          icon: IconUsersGroup,
+          isActive: location.pathname === '/admin/recruitment',
+          onClick: () => navigateTo('/admin/recruitment'),
+        },
+      ],
     },
     {
-      label: 'Admin',
-      isActive: location.pathname === '/admin',
-      onClick: () => navigate('/admin'),
+      label: 'System',
+      items: [
+        {
+          label: 'Users & roles',
+          icon: IconShieldPerson,
+          isActive: location.pathname === '/admin',
+          onClick: () => navigateTo('/admin'),
+        },
+      ],
     },
   ];
 
-  const renderNavButton = (item: { label: string; isActive: boolean; onClick: () => void }) => (
+  const renderNavButton = (item: NavItem) => (
     <Button
       key={item.label}
       onClick={item.onClick}
@@ -85,17 +204,45 @@ const SideNavbar = ({ onLogoutClick }: SideNavbarProps) => {
         bg: 'rgba(126, 232, 214, 0.12)',
       }}
     >
-      {item.label}
+      <Flex as="span" align="center" justify="space-between" gap="10px" w="full">
+        <Flex as="span" align="center" gap="10px" minW={0}>
+          <item.icon size={18} aria-hidden="true" />
+          <Box as="span" textAlign="left">
+            {item.label}
+          </Box>
+        </Flex>
+        {item.count !== undefined && item.count > 0 && (
+          <Badge colorScheme="red" borderRadius="full" px={2} py={0.5} fontSize="0.7rem">
+            {item.count}
+          </Badge>
+        )}
+      </Flex>
     </Button>
+  );
+
+  const renderNavGroup = (group: NavGroup) => (
+    <Stack key={group.label} spacing={2}>
+      <Box
+        fontSize="11px"
+        letterSpacing="0.08em"
+        color="gray.400"
+        textTransform="uppercase"
+        fontWeight={700}
+        px={3}
+      >
+        {group.label}
+      </Box>
+      {group.items.map(renderNavButton)}
+    </Stack>
   );
 
   return (
     <Flex
       as="aside"
-      w={{ base: '200px', md: '240px' }}
-      h="100vh"
-      position="sticky"
-      top={0}
+      w={isInDrawer ? 'full' : { base: '200px', md: '240px' }}
+      h={isInDrawer ? 'full' : '100vh'}
+      position={isInDrawer ? 'relative' : 'sticky'}
+      top={isInDrawer ? 'auto' : 0}
       flexShrink={0}
       px={4}
       py={6}
@@ -108,8 +255,8 @@ const SideNavbar = ({ onLogoutClick }: SideNavbarProps) => {
       <Box>
         <Image src={logoImage} alt="Task Manager logo" maxW="150px" mb={6} />
 
-        <Stack spacing={2}>
-          {(isAdmin ? adminNavItems : employeeNavItems).map(renderNavButton)}
+        <Stack spacing={5}>
+          {(isAdmin ? adminNavGroups : employeeNavGroups).map(renderNavGroup)}
         </Stack>
       </Box>
 
@@ -119,19 +266,25 @@ const SideNavbar = ({ onLogoutClick }: SideNavbarProps) => {
         </Badge>
 
         <Button
-          onClick={() => navigate('/profile')}
+          onClick={() => navigateTo('/profile')}
           colorScheme="teal"
           variant="outline"
           size="sm"
           w="full"
           justifyContent="center"
         >
-          View Profile
+          <Flex as="span" align="center" gap="10px">
+            <IconUserCircle size={18} aria-hidden="true" />
+            <Box as="span">View Profile</Box>
+          </Flex>
         </Button>
 
         {onLogoutClick && (
           <Button
-            onClick={onLogoutClick}
+            onClick={() => {
+              onLogoutClick();
+              onNavigate?.();
+            }}
             colorScheme="red"
             variant="outline"
             size="sm"

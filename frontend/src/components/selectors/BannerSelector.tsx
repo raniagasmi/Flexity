@@ -43,7 +43,7 @@ const BannerSelector = ({
             <Menu>
                 <Tooltip label="Select Banner">
                     <MenuButton  as={IconButton} icon={<ChevronDownIcon />} 
-                 
+                      aria-label="Select banner"
                       rounded="full"
                         colorScheme="teal"
                     />

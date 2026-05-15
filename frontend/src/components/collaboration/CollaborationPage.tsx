@@ -6,6 +6,7 @@ import {
   Button,
   Flex,
   Heading,
+  HStack,
   IconButton,
   Spinner,
   Stack,
@@ -16,6 +17,7 @@ import {
 } from '@chakra-ui/react';
 import { AddIcon } from '@chakra-ui/icons';
 import SideNavbar from '../layout/SideNavbar';
+import MobileSidebarDrawer from '../layout/MobileSidebarDrawer';
 import { authService } from '../../services/auth.service';
 import { userService } from '../../services/user.service';
 import { User, UserRole } from '../../types/user';
@@ -715,10 +717,15 @@ const CollaborationPage = () => {
 
   return (
     <Flex minH="100vh" bg="linear-gradient(180deg, #f8fbff 0%, #eef4ff 45%, #f7f7fb 100%)">
-      <SideNavbar onLogoutClick={handleLogout} />
+      <Box display={{ base: 'none', md: 'block' }}>
+        <SideNavbar onLogoutClick={handleLogout} />
+      </Box>
 
       <Box flex={1} px={{ base: 4, md: 6, xl: 8 }} py={{ base: 6, md: 8 }} maxW="1600px" mx="auto" w="full">
         <Stack spacing={3} mb={6}>
+          <HStack>
+            <MobileSidebarDrawer onLogoutClick={handleLogout} />
+          </HStack>
           <Badge alignSelf="flex-start" colorScheme="purple" borderRadius="full" px={3} py={1}>
             CollaborationChat
           </Badge>

@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
   Badge,
   Box,
   Button,
@@ -19,6 +23,7 @@ import {
   ModalOverlay,
   Select,
   Stack,
+  TableCaption,
   Tab,
   TabList,
   TabPanel,
@@ -34,8 +39,9 @@ import {
   useDisclosure,
   useToast,
 } from '@chakra-ui/react';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import SideNavbar from '../layout/SideNavbar';
+import MobileSidebarDrawer from '../layout/MobileSidebarDrawer';
 import RecruitmentPage from './RecruitmentPage';
 import { authService } from '../../services/auth.service';
 import {
@@ -299,9 +305,25 @@ const AdminRecruitmentPage = () => {
 
   return (
     <Flex minH="100vh" bg="linear-gradient(180deg, #f8fbff 0%, #eef4ff 45%, #f7f7fb 100%)">
-      <SideNavbar onLogoutClick={handleLogout} />
+      <Box display={{ base: 'none', md: 'block' }}>
+        <SideNavbar onLogoutClick={handleLogout} />
+      </Box>
       <Box flex={1} px={{ base: 4, md: 6, xl: 10 }} py={{ base: 8, md: 12 }} maxW="1600px" mx="auto">
         <Stack spacing={3} mb={8}>
+          <HStack>
+            <MobileSidebarDrawer onLogoutClick={handleLogout} />
+          </HStack>
+          <Breadcrumb fontSize="sm" color="gray.500">
+            <BreadcrumbItem>
+              <BreadcrumbLink as={RouterLink} to="/admin" color="teal.600">
+                Admin
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem isCurrentPage>
+              <BreadcrumbLink color="gray.700">Hiring pipeline</BreadcrumbLink>
+            </BreadcrumbItem>
+          </Breadcrumb>
           <Badge alignSelf="flex-start" colorScheme="teal" borderRadius="full" px={3} py={1}>
             Recruitment
           </Badge>
@@ -338,6 +360,7 @@ const AdminRecruitmentPage = () => {
                 </HStack>
                 <Box overflowX="auto">
                   <Table variant="simple">
+                    <TableCaption placement="top">Job offers with approval and application management actions.</TableCaption>
                     <Thead bg="gray.50">
                       <Tr>
                         <Th>Title</Th>
@@ -405,6 +428,7 @@ const AdminRecruitmentPage = () => {
                   </HStack>
                   <Box overflowX="auto">
                     <Table variant="simple">
+                      <TableCaption placement="top">Job offers available for application review.</TableCaption>
                       <Thead bg="gray.50">
                         <Tr>
                           <Th>Title</Th>
@@ -477,6 +501,7 @@ const AdminRecruitmentPage = () => {
                   </HStack>
                   <Box overflowX="auto">
                     <Table variant="simple">
+                      <TableCaption placement="top">Applications for the selected job offer.</TableCaption>
                       <Thead bg="gray.50">
                         <Tr>
                           <Th>Candidate</Th>
@@ -565,6 +590,7 @@ const AdminRecruitmentPage = () => {
                   </HStack>
                   <Box overflowX="auto">
                     <Table variant="simple">
+                      <TableCaption placement="top">Interview slots for the selected job offer.</TableCaption>
                       <Thead bg="gray.50">
                         <Tr>
                           <Th>Date</Th>

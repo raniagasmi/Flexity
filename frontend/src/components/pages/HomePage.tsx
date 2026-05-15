@@ -10,6 +10,7 @@ import {
 } from '@chakra-ui/react';
 import ThemeSelector from '../selectors/ThemeSelector';
 import SideNavbar from '../layout/SideNavbar';
+import MobileSidebarDrawer from '../layout/MobileSidebarDrawer';
 import { AdminDashboard } from '../admin/AdminDashboard';
 import { UserRole } from '../../types/user';
 import { EmployeeDashboard, type EmployeeDashboardSection } from '../employee/EmployeeDashboard';
@@ -57,17 +58,29 @@ const HomePage = () => {
 
   const isAdmin = userRole === UserRole.ADMIN;
   const section = new URLSearchParams(location.search).get('section');
-  const initialSection = isEmployeeDashboardSection(section) ? section : undefined;
+  const view = new URLSearchParams(location.search).get('view');
+  const focusBoard = view === 'board';
+  const initialSection = focusBoard ? 'tasks' : (isEmployeeDashboardSection(section) ? section : undefined);
 
   return (
     <Flex bg="var(--light-color)" w="100vw" minH="100vh">
-      <SideNavbar onLogoutClick={handleLogout} />
+      <Box display={{ base: 'none', md: 'block' }}>
+        <SideNavbar onLogoutClick={handleLogout} />
+      </Box>
       <Flex flex={1} direction="column">
-        <Box flex={1} p={20} overflowY="auto">
+        <Box flex={1} p={{ base: 4, md: 20 }} overflowY="auto">
           {isAdmin ? (
-            <AdminDashboard isAdmin={true} />
+            <AdminDashboard
+              isAdmin={true}
+              focusBoard={focusBoard}
+              mobileNavTrigger={<MobileSidebarDrawer onLogoutClick={handleLogout} />}
+            />
           ) : (
-            <EmployeeDashboard initialSection={initialSection} />
+            <EmployeeDashboard
+              initialSection={initialSection}
+              focusBoard={focusBoard}
+              mobileNavTrigger={<MobileSidebarDrawer onLogoutClick={handleLogout} />}
+            />
           )}
         </Box>
       </Flex>

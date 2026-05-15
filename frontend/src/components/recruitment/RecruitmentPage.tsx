@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
   Badge,
   Box,
   Button,
@@ -33,8 +37,9 @@ import {
   recruitmentService,
 } from '../../services/recruitment.service';
 import SideNavbar from '../layout/SideNavbar';
+import MobileSidebarDrawer from '../layout/MobileSidebarDrawer';
 import { authService } from '../../services/auth.service';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 type RecruitmentFlowState =
   | 'idle'
@@ -355,7 +360,23 @@ const RecruitmentPage = ({ embedded = false }: RecruitmentPageProps) => {
 
   const content = (
       <Stack flex={1} maxW={embedded ? 'none' : '1450px'} spacing={6} px={embedded ? 0 : { base: 4, md: 8 }} py={embedded ? 0 : { base: 6, md: 8 }}>
+        {!embedded && (
+          <Breadcrumb fontSize="sm" color="gray.500">
+            <BreadcrumbItem>
+              <BreadcrumbLink as={RouterLink} to="/admin" color="teal.600">
+                Admin
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem isCurrentPage>
+              <BreadcrumbLink color="gray.700">Job studio</BreadcrumbLink>
+            </BreadcrumbItem>
+          </Breadcrumb>
+        )}
         <Flex justify="space-between" align="center" gap={3}>
+          <HStack align="start">
+            <MobileSidebarDrawer onLogoutClick={handleLogout} />
+          </HStack>
           <Box>
             <Heading size="lg" color="var(--font-color)">
               Recruitment AI Copilot
@@ -678,7 +699,9 @@ const RecruitmentPage = ({ embedded = false }: RecruitmentPageProps) => {
 
   return (
     <Flex bg="var(--light-color)" minH="100vh">
-      <SideNavbar onLogoutClick={handleLogout} />
+      <Box display={{ base: 'none', md: 'block' }}>
+        <SideNavbar onLogoutClick={handleLogout} />
+      </Box>
       {content}
     </Flex>
   );

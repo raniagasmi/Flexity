@@ -23,6 +23,9 @@ interface AlertsPanelProps {
   alerts: Alert[];
   onResolve?: (alert: Alert) => void;
   isLoading?: boolean;
+  maxUnresolvedItems?: number;
+  onViewAllAlerts?: () => void;
+  previewTitle?: string;
 }
 
 const alertTypeConfig: Record<
@@ -67,6 +70,10 @@ const severityColor: Record<'LOW' | 'MEDIUM' | 'HIGH', string> = {
   HIGH: 'red',
 };
 
+const Emoji = ({ label, symbol }: { label: string; symbol: string }) => (
+  <span role="img" aria-label={label}>{symbol}</span>
+);
+
 /**
  * Individual alert item
  */
@@ -98,7 +105,7 @@ const AlertItem: React.FC<{ alert: Alert; onResolve?: (alert: Alert) => void }> 
     >
       <Flex justify="space-between" align="start" mb={2}>
         <HStack spacing={2} flex={1}>
-          <Text fontSize="lg">{config.icon}</Text>
+          <Text fontSize="lg"><Emoji label={config.description} symbol={config.icon} /></Text>
           <VStack align="start" spacing={0}>
             <Flex gap={2} align="center">
               <Text fontWeight="bold" fontSize="sm">
@@ -143,18 +150,26 @@ const AlertItem: React.FC<{ alert: Alert; onResolve?: (alert: Alert) => void }> 
 export const AlertsPanel: React.FC<AlertsPanelProps> = ({
   alerts,
   onResolve,
+  maxUnresolvedItems,
+  onViewAllAlerts,
+  previewTitle = 'Alerts',
 }) => {
   const unresolvedAlerts = alerts.filter((a) => !a.isResolved);
   const resolvedAlerts = alerts.filter((a) => a.isResolved);
+  const limitedUnresolvedAlerts =
+    typeof maxUnresolvedItems === 'number'
+      ? unresolvedAlerts.slice(0, maxUnresolvedItems)
+      : unresolvedAlerts;
 
   const activeAlerts = unresolvedAlerts.length;
   const criticalAlerts = unresolvedAlerts.filter((a) => a.severity === 'HIGH').length;
+  const isPreviewMode = typeof maxUnresolvedItems === 'number';
 
   return (
     <Box bg="white" borderRadius="lg" p={4} boxShadow="sm">
       <Flex justify="space-between" align="center" mb={4}>
         <VStack align="start" spacing={0}>
-          <Heading size="md">Alerts</Heading>
+          <Heading size="md">{previewTitle}</Heading>
           <HStack spacing={3} mt={2}>
             <Badge colorScheme="red" fontSize="sm">
               {activeAlerts} Active
@@ -166,56 +181,79 @@ export const AlertsPanel: React.FC<AlertsPanelProps> = ({
             )}
           </HStack>
         </VStack>
+        {isPreviewMode && onViewAllAlerts && (
+          <Button size="sm" variant="ghost" colorScheme="blue" onClick={onViewAllAlerts}>
+            View all alerts
+          </Button>
+        )}
       </Flex>
 
-      <Tabs variant="soft-rounded" defaultIndex={0}>
-        <TabList mb={4}>
-          <Tab>
-            Active ({unresolvedAlerts.length})
-          </Tab>
-          <Tab>
-            Resolved ({resolvedAlerts.length})
-          </Tab>
-        </TabList>
+      {isPreviewMode ? (
+        limitedUnresolvedAlerts.length === 0 ? (
+          <Text color="gray.500" textAlign="center" py={8}>
+            <Emoji label="Success" symbol="✅" /> All good! No active alerts.
+          </Text>
+        ) : (
+          <Stack spacing={3}>
+            {limitedUnresolvedAlerts.map((alert) => (
+              <AlertItem
+                key={alert.id}
+                alert={alert}
+                onResolve={onResolve}
+              />
+            ))}
+          </Stack>
+        )
+      ) : (
+        <Tabs variant="soft-rounded" defaultIndex={0}>
+          <TabList mb={4}>
+            <Tab>
+              Active ({unresolvedAlerts.length})
+            </Tab>
+            <Tab>
+              Resolved ({resolvedAlerts.length})
+            </Tab>
+          </TabList>
 
-        <TabPanels>
-          <TabPanel>
-            {unresolvedAlerts.length === 0 ? (
-              <Text color="gray.500" textAlign="center" py={8}>
-                ✅ All good! No active alerts.
-              </Text>
-            ) : (
-              <Stack spacing={3}>
-                {unresolvedAlerts.map((alert) => (
-                  <AlertItem
-                    key={alert.id}
-                    alert={alert}
-                    onResolve={onResolve}
-                  />
-                ))}
-              </Stack>
-            )}
-          </TabPanel>
+          <TabPanels>
+            <TabPanel>
+              {unresolvedAlerts.length === 0 ? (
+                <Text color="gray.500" textAlign="center" py={8}>
+                  <Emoji label="Success" symbol="✅" /> All good! No active alerts.
+                </Text>
+              ) : (
+                <Stack spacing={3}>
+                  {unresolvedAlerts.map((alert) => (
+                    <AlertItem
+                      key={alert.id}
+                      alert={alert}
+                      onResolve={onResolve}
+                    />
+                  ))}
+                </Stack>
+              )}
+            </TabPanel>
 
-          <TabPanel>
-            {resolvedAlerts.length === 0 ? (
-              <Text color="gray.500" textAlign="center" py={8}>
-                No resolved alerts yet.
-              </Text>
-            ) : (
-              <Stack spacing={3}>
-                {resolvedAlerts.slice(0, 10).map((alert) => (
-                  <AlertItem
-                    key={alert.id}
-                    alert={alert}
-                    onResolve={onResolve}
-                  />
-                ))}
-              </Stack>
-            )}
-          </TabPanel>
-        </TabPanels>
-      </Tabs>
+            <TabPanel>
+              {resolvedAlerts.length === 0 ? (
+                <Text color="gray.500" textAlign="center" py={8}>
+                  No resolved alerts yet.
+                </Text>
+              ) : (
+                <Stack spacing={3}>
+                  {resolvedAlerts.slice(0, 10).map((alert) => (
+                    <AlertItem
+                      key={alert.id}
+                      alert={alert}
+                      onResolve={onResolve}
+                    />
+                  ))}
+                </Stack>
+              )}
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
+      )}
     </Box>
   );
 };

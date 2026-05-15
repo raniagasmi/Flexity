@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Avatar, Box, Flex, VStack } from '@chakra-ui/react';
+import { Avatar, Box, Flex, Tooltip, VStack } from '@chakra-ui/react';
 import { authService } from '../../services/auth.service';
 import { userService } from '../../services/user.service';
 import { User } from '../../types/user';
@@ -12,6 +12,7 @@ import Hexagon from '../design/Hexagon';
 import ThemeSelector from '../selectors/ThemeSelector';
 import BannerSelector from '../selectors/BannerSelector';
 import SideNavbar from '../layout/SideNavbar';
+import MobileSidebarDrawer from '../layout/MobileSidebarDrawer';
 
 type BannerType = 'Breezy' | 'Particles' | 'Pattern' | 'Hexagon';
 
@@ -50,23 +51,36 @@ const ProfilePage = () => {
     navigate('/login');
   };
 
+  const fullName =
+    user?.name ||
+    [user?.firstName, user?.lastName].filter(Boolean).join(' ') ||
+    user?.email ||
+    '';
+
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
 
   return (
     <Flex bg="var(--light-color)" minH="100vh">
-      <SideNavbar onLogoutClick={handleLogout} />
+      <Box display={{ base: 'none', md: 'block' }}>
+        <SideNavbar onLogoutClick={handleLogout} />
+      </Box>
       <Box flex={1} p={{ base: 6, md: 10 }} overflowY="auto">
         <VStack gap={0} align="stretch" borderRadius="xl" overflow="hidden" bg="var(--light-color)">
           <Box w="100%" h="30vh" position="relative" bg="var(--dark-color)">
+            <Box position="absolute" top={4} left={4} zIndex={2}>
+              <MobileSidebarDrawer onLogoutClick={handleLogout} />
+            </Box>
             <BannerSelector setBanner={setBanner} />
             {banner === 'Breezy' && <Breezycherryblossoms />}
             {banner === 'Particles' && <Particles />}
             {banner === 'Pattern' && <Pattern />}
             {banner === 'Hexagon' && <Hexagon />}
             <Box ml={5} bg="var(--light-color)" position="absolute" top="22vh" p={2} borderRadius="full">
-              <Avatar size="2xl" name="Dan Abrahmov" src="https://bit.ly/dan-abramov" />
+              <Tooltip label={fullName} hasArrow>
+                <Avatar size="2xl" src={user?.avatarUrl || undefined} name={fullName} />
+              </Tooltip>
             </Box>
           </Box>
           <Box>
