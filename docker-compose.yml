@@ -70,22 +70,6 @@ services:
     ports:
       - "3002:3002"
 
-  recruitment-service:
-    build:
-      context: ./recruitment-service
-      dockerfile: Dockerfile
-    container_name: task-manager-recruitment-service
-    restart: unless-stopped
-    env_file:
-      - ./recruitment-service/.env
-    depends_on:
-      mongo:
-        condition: service_healthy
-    environment:
-      MONGODB_URI: mongodb://mongo:27017/recruitment_service
-    ports:
-      - "3004:3004"
-
   conversation-service:
     build:
       context: ./conversation-service
@@ -103,7 +87,7 @@ services:
       PORT: 3006
       MONGO_URI: mongodb://mongo:27017/conversation_service
       USER_SERVICE_HOST: user-service
-      USER_SERVICE_PORT: 3005
+      USER_SERVICE_PORT: 3001
       TASK_SERVICE_HOST: task-service
       TASK_SERVICE_PORT: 3002
     ports:
@@ -120,7 +104,7 @@ services:
         condition: service_started
       task-service:
         condition: service_started
-      recruitment-service:
+      conversation-service:
         condition: service_started
     environment:
       PORT: 3000
@@ -129,9 +113,7 @@ services:
       USER_SERVICE_PORT: 3001
       TASK_SERVICE_HOST: task-service
       TASK_SERVICE_PORT: 3002
-      RECRUITMENT_SERVICE_HOST: recruitment-service
-      RECRUITMENT_SERVICE_PORT: 3004
-      CONVERSATION_SERVICE_HOST: ${CONVERSATION_SERVICE_HOST:-host.docker.internal}
+      CONVERSATION_SERVICE_HOST: conversation-service
       CONVERSATION_SERVICE_PORT: ${CONVERSATION_SERVICE_PORT:-3006}
     ports:
       - "3000:3000"
@@ -147,8 +129,7 @@ services:
       api-gateway:
         condition: service_started
     ports:
-      - "5173:5173"
-    command: npm run preview -- --host 0.0.0.0 --port 5173
+      - "5173:80"
 
 volumes:
   mongo_data:

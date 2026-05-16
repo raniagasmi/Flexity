@@ -1,23 +1,18 @@
 # syntax=docker/dockerfile:1.7
 
-FROM node:20-slim
+FROM node:20-slim AS builder
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
 COPY package*.json ./
-
-RUN npm config set fetch-retries 10 \
-	&& npm config set fetch-retry-factor 2 \
-	&& npm config set fetch-retry-mintimeout 20000 \
-	&& npm config set fetch-retry-maxtimeout 180000 \
-	&& npm config set fetch-timeout 300000 \
-	&& npm config set registry https://registry.npmjs.org/ \
-	&& for i in 1 2 3; do npm ci --include=dev --no-audit --no-fund --prefer-online && break || (echo "npm ci failed, retry $i/3" && npm cache clean --force && sleep 10); done
+RUN npm ci
 
 COPY . .
+RUN npm run build
 
-RUN rm -rf dist && npm run build
+FROM nginx:alpine AS runtime
 
-EXPOSE 5173
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "5173"]
+EXPOSE 80
