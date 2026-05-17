@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1.7
-
 FROM node:20-slim AS builder
 
 WORKDIR /app
@@ -23,6 +21,6 @@ COPY --from=builder /app/dist ./dist
 USER node
 EXPOSE 3001
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 CMD wget -qO- http://localhost:3001/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 CMD ["node","-e","require('http').get('http://localhost:3001/health', res => { process.exit(res.statusCode === 200 ? 0 : 1); }).on('error', () => process.exit(1))"]
 
 CMD ["node", "dist/main.js"]

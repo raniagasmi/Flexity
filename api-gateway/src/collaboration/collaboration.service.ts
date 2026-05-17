@@ -88,6 +88,14 @@ export class CollaborationService {
     return this.forwardPost(`/collaboration/proposals/${proposalId}/reject`, body);
   }
 
+  async getConversationGantt(conversationId: string) {
+    return this.forwardGet(`/collaboration/conversations/${conversationId}/gantt`);
+  }
+
+  async updateProposalSchedule(proposalId: string, body: unknown) {
+    return this.forwardPatch(`/collaboration/proposals/${proposalId}/schedule`, body);
+  }
+
   private async forwardGet(path: string) {
     return this.forward('GET', path);
   }
@@ -96,7 +104,11 @@ export class CollaborationService {
     return this.forward('POST', path, body);
   }
 
-  private async forward(method: 'GET' | 'POST', path: string, body?: unknown) {
+  private async forwardPatch(path: string, body: unknown) {
+    return this.forward('PATCH', path, body);
+  }
+
+  private async forward(method: 'GET' | 'POST' | 'PATCH', path: string, body?: unknown) {
     try {
       const response = await fetch(`${this.baseUrl}${path}`, {
         method,

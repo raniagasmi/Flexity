@@ -25,7 +25,7 @@ import { TaskProposal, TaskProposalSchema } from './schemas/task-proposal.schema
         transport: Transport.TCP,
         options: {
           host: process.env.TASK_SERVICE_HOST ?? 'task-service',
-          port: process.env.TASK_SERVICE_PORT ? parseInt(process.env.TASK_SERVICE_PORT, 10) : 3002,
+          port: process.env.TASK_SERVICE_PORT ? parseInt(process.env.TASK_SERVICE_PORT, 10) : 3003,
         },
       },
     ]),

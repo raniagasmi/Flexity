@@ -22,7 +22,7 @@ import { authService } from '../../services/auth.service';
 import { userService } from '../../services/user.service';
 import { User, UserRole } from '../../types/user';
 import ConversationList from './ConversationList';
-import ChatWindow from './ChatWindow';
+import ChatWindow, { CollaborationDetailTab } from './ChatWindow';
 import CreateConversationModal from './CreateConversationModal';
 import {
   AiDecomposeResponse,
@@ -70,6 +70,7 @@ const CollaborationPage = () => {
   const [selectedConversationId, setSelectedConversationId] = useState('');
   const [messages, setMessages] = useState<CollaborationMessage[]>([]);
   const [proposals, setProposals] = useState<CollaborationTaskProposal[]>([]);
+  const [collaborationTab, setCollaborationTab] = useState<CollaborationDetailTab>('messages');
   const [users, setUsers] = useState<User[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [isAiThinking, setIsAiThinking] = useState(false);
@@ -174,6 +175,7 @@ const CollaborationPage = () => {
       const aiResponse = payload as AiDecomposeResponse & { conversationId: string };
       if (aiResponse.proposals?.length) {
         setProposals(aiResponse.proposals);
+        setCollaborationTab('gantt');
       }
 
       setIsAiThinking(false);
@@ -486,6 +488,7 @@ const CollaborationPage = () => {
       setSelectedConversationId('');
       setMessages([]);
       setProposals([]);
+      setCollaborationTab('messages');
     }
   };
 
@@ -493,7 +496,9 @@ const CollaborationPage = () => {
     const conversationId = toConversationId(conversation);
     setSelectedConversationId(conversationId);
     setMessages(await collaborationService.getMessages(conversationId));
-    setProposals(collaborationService.getCachedProposals(conversationId));
+    const cachedProposals = collaborationService.getCachedProposals(conversationId);
+    setProposals(cachedProposals);
+    setCollaborationTab('messages');
     collaborationSocket.joinConversation(conversationId);
     localStorage.setItem(seenKey(conversationId), new Date().toISOString());
     setConversations((prev) =>
@@ -546,7 +551,11 @@ const CollaborationPage = () => {
         setSelectedConversationId(conversationId);
         const freshMessages = await collaborationService.getMessages(conversationId);
         setMessages(freshMessages);
-        setProposals(response.proposals ?? collaborationService.getCachedProposals(conversationId));
+        const createdProposals = response.proposals ?? collaborationService.getCachedProposals(conversationId);
+        setProposals(createdProposals);
+        if (createdProposals.length > 0) {
+          setCollaborationTab('gantt');
+        }
         await refreshConversationList(conversationId);
 
       collaborationSocket.joinConversation(conversationId);
@@ -584,6 +593,9 @@ const CollaborationPage = () => {
         setIsAiThinking(true);
         const response = await collaborationService.aiDecompose(selectedConversationId);
         setProposals(response.proposals);
+        if (response.proposals.length > 0) {
+          setCollaborationTab('gantt');
+        }
         await refreshConversationList(selectedConversationId);
         toast({
         title: 'AI tasks updated',
@@ -614,6 +626,7 @@ const CollaborationPage = () => {
         const approved = await collaborationService.approveTasks(selectedConversationId);
         if (approved.length > 0) {
           setProposals([]);
+          setCollaborationTab('messages');
           await refreshConversationList(selectedConversationId);
           toast({
           title: 'Tasks assigned successfully',
@@ -840,6 +853,8 @@ const CollaborationPage = () => {
                 onApproveProposal={handleApproveProposal}
                 onRejectProposal={handleRejectProposal}
                 onManualAIGeneration={handleRegenerateAi}
+                activeTab={collaborationTab}
+                onActiveTabChange={setCollaborationTab}
               />
             )}
           </Box>

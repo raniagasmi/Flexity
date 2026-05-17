@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CollaborationModule } from './collaboration/collaboration.module';
+import { HealthController } from './health.controller';
 
 @Module({
   imports: [
@@ -22,13 +23,13 @@ import { CollaborationModule } from './collaboration/collaboration.module';
         transport: Transport.TCP,
         options: {
           host: process.env.TASK_SERVICE_HOST ?? 'task-service',
-          port: process.env.TASK_SERVICE_PORT ? parseInt(process.env.TASK_SERVICE_PORT, 10) : 3002,
+          port: process.env.TASK_SERVICE_PORT ? parseInt(process.env.TASK_SERVICE_PORT, 10) : 3003,
         },
       },
     ]),
     CollaborationModule,
   ],
-  controllers: [],
+    controllers: [HealthController],
   providers: [],
 })
 export class AppModule {}

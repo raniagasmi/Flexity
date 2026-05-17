@@ -1,0 +1,18 @@
+.collaboration-gantt .gantt-rejected .bar-label {
+  text-decoration: line-through;
+}
+
+.collaboration-gantt .gantt-draft .bar {
+  fill: #9ca3af;
+  stroke: #6b7280;
+}
+
+.collaboration-gantt .gantt-approved .bar {
+  fill: #22c55e;
+  stroke: #16a34a;
+}
+
+.collaboration-gantt .gantt-rejected .bar {
+  fill: #ef4444;
+  stroke: #dc2626;
+}

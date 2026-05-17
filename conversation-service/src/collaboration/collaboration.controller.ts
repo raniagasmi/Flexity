@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { CollaborationService } from './collaboration.service';
 import type { ApproveProposalDto, CreateConversationDto, SendMessageDto } from './dto/create-conversation.dto';
+import type { UpdateProposalScheduleDto } from './dto/update-proposal-schedule.dto';
 
 @Controller('collaboration')
 export class CollaborationController {
@@ -34,6 +35,16 @@ export class CollaborationController {
   @Post('conversations/:id/ai-decompose')
   decompose(@Param('id') id: string, @Body() body: ApproveProposalDto) {
     return this.collaborationService.runAiDecomposition(id, body.adminId);
+  }
+
+  @Get('conversations/:id/gantt')
+  getGantt(@Param('id') id: string) {
+    return this.collaborationService.getConversationGantt(id);
+  }
+
+  @Patch('proposals/:id/schedule')
+  updateSchedule(@Param('id') id: string, @Body() body: UpdateProposalScheduleDto) {
+    return this.collaborationService.updateProposalSchedule(id, body);
   }
 
   @Post('proposals/:id/approve')

@@ -18,7 +18,7 @@ import { UserModule } from '../user/user.module';
         transport: Transport.TCP,
         options: {
           host: 'task-service',
-          port: 3002,
+            port: 3003,
         },
       },
     ]),

@@ -71,6 +71,24 @@ export interface CollaborationTaskProposal {
   status?: 'DRAFT' | 'APPROVED' | 'REJECTED';
   createdTaskId?: string;
   assignee?: CollaborationUserSummary;
+  startDay?: number;
+  estimatedDays?: number;
+  dependsOn?: string[];
+}
+
+export interface CollaborationGanttItem {
+  id: string;
+  title: string;
+  assignee: string;
+  startDay: number;
+  estimatedDays: number;
+  dependsOn: string[];
+  status: 'draft' | 'approved' | 'rejected' | string;
+}
+
+export interface UpdateProposalSchedulePayload {
+  startDay: number;
+  estimatedDays: number;
 }
 
 export interface CreateConversationPayload {
@@ -119,6 +137,25 @@ class CollaborationService {
     }
 
     this.proposalCache.set(conversationId, proposals);
+  }
+
+  private updateCachedProposalSchedule(
+    conversationId: string,
+    proposalId: string,
+    schedule: UpdateProposalSchedulePayload,
+  ) {
+    const cached = this.proposalCache.get(conversationId);
+    if (!cached) {
+      return;
+    }
+
+    const next = cached.map((proposal) =>
+      (proposal.id ?? proposal._id) === proposalId
+        ? { ...proposal, ...schedule }
+        : proposal,
+    );
+
+    this.proposalCache.set(conversationId, next);
   }
 
   private updateCachedProposal(conversationId: string, proposalId: string, status: 'APPROVED' | 'REJECTED') {
@@ -320,6 +357,44 @@ class CollaborationService {
 
   getCachedProposals(conversationId: string): CollaborationTaskProposal[] {
     return this.proposalCache.get(conversationId) ?? [];
+  }
+
+  async getConversationGantt(conversationId: string): Promise<CollaborationGanttItem[]> {
+    try {
+      const response = await api.get<CollaborationGanttItem[]>(
+        API_ENDPOINTS.COLLABORATION.GANTT(conversationId),
+      );
+
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(`Failed to load Gantt data: ${error.message}`);
+      }
+
+      throw error;
+    }
+  }
+
+  async updateProposalSchedule(
+    proposalId: string,
+    conversationId: string,
+    payload: UpdateProposalSchedulePayload,
+  ): Promise<CollaborationTaskProposal> {
+    try {
+      const response = await api.patch<CollaborationTaskProposal>(
+        API_ENDPOINTS.COLLABORATION.PROPOSAL_SCHEDULE(proposalId),
+        payload,
+      );
+
+      this.updateCachedProposalSchedule(conversationId, proposalId, payload);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(`Failed to update proposal schedule: ${error.message}`);
+      }
+
+      throw error;
+    }
   }
 }
 

@@ -67,5 +67,7 @@ export const API_ENDPOINTS = {
     AI_DECOMPOSE: (conversationId: string) => `/collaboration/conversations/${conversationId}/ai-decompose`,
     APPROVE_PROPOSAL: (proposalId: string) => `/collaboration/proposals/${proposalId}/approve`,
     REJECT_PROPOSAL: (proposalId: string) => `/collaboration/proposals/${proposalId}/reject`,
+    GANTT: (conversationId: string) => `/collaboration/conversations/${conversationId}/gantt`,
+    PROPOSAL_SCHEDULE: (proposalId: string) => `/collaboration/proposals/${proposalId}/schedule`,
   },
 };

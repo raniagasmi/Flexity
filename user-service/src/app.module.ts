@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { HealthController } from './health.controller';
 import { AuthService } from './auth/auth.service';
 import { AuthController } from './auth/auth.controller';
 import { UserService } from './user/user.service';
@@ -28,7 +29,7 @@ import { keys } from './config/keys';
       signOptions: { expiresIn: keys.jwtExpiresIn },
     }),
   ],
-  controllers: [AppController, AuthController, UserController, AuditLogController],
+  controllers: [AppController, AuthController, UserController, AuditLogController, HealthController],
   providers: [AppService, AuthService, UserService, JwtStrategy, AuditLogService],
 })
 export class AppModule {}

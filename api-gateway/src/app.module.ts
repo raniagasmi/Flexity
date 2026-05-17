@@ -20,7 +20,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
       {
         name: 'TASK_SERVICE',
         transport: Transport.TCP,
-        options: { host: 'task-service', port: 3002 },
+        options: { host: 'task-service', port: 3003 },
       },
     ]),
     AuthModule,

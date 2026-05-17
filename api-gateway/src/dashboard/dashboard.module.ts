@@ -15,7 +15,7 @@ import { DashboardService } from './dashboard.service';
         transport: Transport.TCP,
         options: {
           host: 'task-service',
-          port: 3002,
+            port: 3003,
         },
       },
     ]),

@@ -15,6 +15,11 @@ import {
   MenuList,
   Spinner,
   Stack,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
   Text,
   Tooltip,
   VStack,
@@ -23,7 +28,10 @@ import { ArrowForwardIcon, RepeatIcon } from '@chakra-ui/icons';
 import { CollaborationConversation, CollaborationMessage, CollaborationTaskProposal } from '../../services/collaboration.service';
 import MessageBubble from './MessageBubble';
 import TaskProposalCard from './TaskProposalCard';
+import GanttChart from './GanttChart';
 import { User } from '../../types/user';
+
+export type CollaborationDetailTab = 'messages' | 'proposals' | 'gantt';
 
 interface ChatWindowProps {
   conversation?: CollaborationConversation | null;
@@ -44,6 +52,8 @@ interface ChatWindowProps {
   onApproveProposal: (proposal: CollaborationTaskProposal) => void;
   onRejectProposal: (proposal: CollaborationTaskProposal) => void;
   onManualAIGeneration: () => void;
+  activeTab: CollaborationDetailTab;
+  onActiveTabChange: (tab: CollaborationDetailTab) => void;
 }
 
 const ChatWindow = ({
@@ -65,6 +75,8 @@ const ChatWindow = ({
   onApproveProposal,
   onRejectProposal,
   onManualAIGeneration,
+  activeTab,
+  onActiveTabChange,
 }: ChatWindowProps) => {
   const [draft, setDraft] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -88,6 +100,15 @@ const ChatWindow = ({
     }
     onStopTyping();
   }, [onStopTyping]);
+
+  const conversationId = conversation?.id ?? conversation?._id ?? '';
+  const showGanttTab = proposals.length > 0;
+
+  useEffect(() => {
+    if (!showGanttTab && activeTab === 'gantt') {
+      onActiveTabChange('messages');
+    }
+  }, [activeTab, onActiveTabChange, showGanttTab]);
 
   const roomLabel = useMemo(() => {
     if (!conversation) {
@@ -230,127 +251,172 @@ const ChatWindow = ({
       </Box>
 
       <Flex flex={1} direction="column" minH={0}>
-        <Box ref={scrollRef} flex={1} overflowY="auto" px={6} py={5} bg="linear-gradient(180deg, #fbfdff 0%, #f4f8fb 100%)">
-          <Stack spacing={4}>
-            {filteredMessages.length === 0 ? (
-              <Box borderWidth="1px" borderColor="gray.100" borderRadius="2xl" p={6} bg="white">
-                <Text color="gray.500">
-                  {searchQuery ? 'No messages match your search.' : 'No messages yet. Start the conversation or generate AI tasks.'}
-                </Text>
-              </Box>
-            ) : (
-              filteredMessages.map((message) => {
-                const sender = usersById[message.senderId] ?? message.sender;
-                const senderLabel =
-                  message.senderType === 'AI'
-                    ? 'AI'
-                    : message.senderType === 'SYSTEM'
-                      ? 'System'
-                      : sender
-                        ? `${sender.firstName} ${sender.lastName}`
-                        : message.sender?.fullName ?? message.senderId;
+        <Tabs
+          index={activeTab === 'messages' ? 0 : activeTab === 'proposals' ? 1 : 2}
+          onChange={(index) => {
+            if (index === 0) {
+              onActiveTabChange('messages');
+              return;
+            }
+            if (index === 1) {
+              onActiveTabChange('proposals');
+              return;
+            }
+            onActiveTabChange('gantt');
+          }}
+          display="flex"
+          flexDirection="column"
+          flex={1}
+          minH={0}
+          variant="enclosed"
+          colorScheme="teal"
+        >
+          <TabList px={6} pt={3} bg="white" borderBottom="1px solid" borderColor="gray.100">
+            <Tab>Messages</Tab>
+            <Tab>Proposals</Tab>
+            {showGanttTab && <Tab>Gantt</Tab>}
+          </TabList>
 
-                const isOwnMessage = message.senderId === currentUser?.id;
-
-                return (
-                  <Box key={message.id ?? message._id ?? `${message.conversationId}-${message.timestamp ?? message.content}`}> 
-                    <MessageBubble
-                      message={message}
-                      isOwnMessage={isOwnMessage}
-                      senderLabel={senderLabel}
-                      senderAvatarUrl={message.senderType === 'USER' ? sender?.avatarUrl : undefined}
-                    />
-                  </Box>
-                );
-              })
-            )}
-
-            {isAiThinking && (
-              <Box
-                alignSelf="flex-start"
-                bg="white"
-                borderWidth="1px"
-                borderColor="purple.100"
-                borderRadius="full"
-                px={4}
-                py={2}
-                boxShadow="sm"
-              >
-                <HStack spacing={2}>
-                  <Spinner size="sm" color="purple.500" />
-                  <Text color="gray.600">AI is generating proposals...</Text>
-                </HStack>
-              </Box>
-            )}
-
-            {typingLabel && (
-              <Box
-                alignSelf="flex-start"
-                bg="white"
-                borderWidth="1px"
-                borderColor="teal.100"
-                borderRadius="full"
-                px={4}
-                py={2}
-                boxShadow="sm"
-              >
-                <HStack spacing={2}>
-                  <Spinner size="sm" color="teal.500" />
-                  <Text color="gray.600">{typingLabel}</Text>
-                </HStack>
-              </Box>
-            )}
-
-            {proposals.length > 0 && (
-              <Box pt={2}>
-                <Flex justify="space-between" align="center" mb={3} wrap="wrap" gap={3}>
-                  <Box>
-                    <Badge colorScheme={isAdmin ? 'purple' : 'gray'} borderRadius="full" px={3} py={1}>
-                      AI task proposals
-                    </Badge>
-                    <Text mt={2} color="gray.600">
-                      Review the generated tasks before they are assigned.
+          <TabPanels flex={1} minH={0} display="flex" flexDirection="column">
+            <TabPanel flex={1} minH={0} overflowY="auto" px={6} py={5} bg="linear-gradient(180deg, #fbfdff 0%, #f4f8fb 100%)">
+              <Stack spacing={4}>
+                {filteredMessages.length === 0 ? (
+                  <Box borderWidth="1px" borderColor="gray.100" borderRadius="2xl" p={6} bg="white">
+                    <Text color="gray.500">
+                      {searchQuery ? 'No messages match your search.' : 'No messages yet. Start the conversation or generate AI tasks.'}
                     </Text>
                   </Box>
+                ) : (
+                  filteredMessages.map((message) => {
+                    const sender = usersById[message.senderId] ?? message.sender;
+                    const senderLabel =
+                      message.senderType === 'AI'
+                        ? 'AI'
+                        : message.senderType === 'SYSTEM'
+                          ? 'System'
+                          : sender
+                            ? `${sender.firstName} ${sender.lastName}`
+                            : message.sender?.fullName ?? message.senderId;
 
-                  {isAdmin && (
-                    <HStack>
-                      <Button size="sm" colorScheme="teal" onClick={onApproveAll} leftIcon={<ArrowForwardIcon />}>
-                        Approve All Tasks
-                      </Button>
-                      <IconButton
-                        aria-label="Regenerate AI tasks"
-                        size="sm"
-                        variant="outline"
-                        colorScheme="purple"
-                        icon={<RepeatIcon />}
-                        onClick={onManualAIGeneration}
-                      />
-                    </HStack>
-                  )}
-                </Flex>
-
-                <Stack spacing={3}>
-                  {proposals.map((proposal) => {
-                    const assignee = usersById[proposal.assignedTo] ?? proposal.assignee;
-                    const assigneeLabel = assignee ? `${assignee.firstName} ${assignee.lastName}` : proposal.assignee?.fullName ?? proposal.assignedTo;
+                    const isOwnMessage = message.senderId === currentUser?.id;
 
                     return (
-                      <TaskProposalCard
-                        key={proposal.id ?? proposal._id ?? `${proposal.title}-${proposal.assignedTo}`}
-                        proposal={proposal}
-                        assigneeLabel={assigneeLabel}
-                        isAdmin={isAdmin}
-                        onApprove={onApproveProposal}
-                        onReject={onRejectProposal}
-                      />
+                      <Box key={message.id ?? message._id ?? `${message.conversationId}-${message.timestamp ?? message.content}`}>
+                        <MessageBubble
+                          message={message}
+                          isOwnMessage={isOwnMessage}
+                          senderLabel={senderLabel}
+                          senderAvatarUrl={message.senderType === 'USER' ? sender?.avatarUrl : undefined}
+                        />
+                      </Box>
                     );
-                  })}
-                </Stack>
-              </Box>
+                  })
+                )}
+
+                {isAiThinking && (
+                  <Box
+                    alignSelf="flex-start"
+                    bg="white"
+                    borderWidth="1px"
+                    borderColor="purple.100"
+                    borderRadius="full"
+                    px={4}
+                    py={2}
+                    boxShadow="sm"
+                  >
+                    <HStack spacing={2}>
+                      <Spinner size="sm" color="purple.500" />
+                      <Text color="gray.600">AI is generating proposals...</Text>
+                    </HStack>
+                  </Box>
+                )}
+
+                {typingLabel && (
+                  <Box
+                    alignSelf="flex-start"
+                    bg="white"
+                    borderWidth="1px"
+                    borderColor="teal.100"
+                    borderRadius="full"
+                    px={4}
+                    py={2}
+                    boxShadow="sm"
+                  >
+                    <HStack spacing={2}>
+                      <Spinner size="sm" color="teal.500" />
+                      <Text color="gray.600">{typingLabel}</Text>
+                    </HStack>
+                  </Box>
+                )}
+              </Stack>
+            </TabPanel>
+
+            <TabPanel flex={1} minH={0} overflowY="auto" px={6} py={5} bg="linear-gradient(180deg, #fbfdff 0%, #f4f8fb 100%)">
+              {proposals.length > 0 ? (
+                <Box>
+                  <Flex justify="space-between" align="center" mb={3} wrap="wrap" gap={3}>
+                    <Box>
+                      <Badge colorScheme={isAdmin ? 'purple' : 'gray'} borderRadius="full" px={3} py={1}>
+                        AI task proposals
+                      </Badge>
+                      <Text mt={2} color="gray.600">
+                        Review the generated tasks before they are assigned.
+                      </Text>
+                    </Box>
+
+                    {isAdmin && (
+                      <HStack>
+                        <Button size="sm" colorScheme="teal" onClick={onApproveAll} leftIcon={<ArrowForwardIcon />}>
+                          Approve All Tasks
+                        </Button>
+                        <IconButton
+                          aria-label="Regenerate AI tasks"
+                          size="sm"
+                          variant="outline"
+                          colorScheme="purple"
+                          icon={<RepeatIcon />}
+                          onClick={onManualAIGeneration}
+                        />
+                      </HStack>
+                    )}
+                  </Flex>
+
+                  <Stack spacing={3}>
+                    {proposals.map((proposal) => {
+                      const assignee = usersById[proposal.assignedTo] ?? proposal.assignee;
+                      const assigneeLabel = assignee ? `${assignee.firstName} ${assignee.lastName}` : proposal.assignee?.fullName ?? proposal.assignedTo;
+
+                      return (
+                        <TaskProposalCard
+                          key={proposal.id ?? proposal._id ?? `${proposal.title}-${proposal.assignedTo}`}
+                          proposal={proposal}
+                          assigneeLabel={assigneeLabel}
+                          isAdmin={isAdmin}
+                          onApprove={onApproveProposal}
+                          onReject={onRejectProposal}
+                        />
+                      );
+                    })}
+                  </Stack>
+                </Box>
+              ) : (
+                <Box borderWidth="1px" borderColor="gray.100" borderRadius="2xl" p={6} bg="white">
+                  <Text color="gray.500">No proposals yet. Generate AI tasks to review them here.</Text>
+                </Box>
+              )}
+            </TabPanel>
+
+            {showGanttTab && (
+              <TabPanel flex={1} minH={0} p={0} display="flex" flexDirection="column">
+                <GanttChart
+                  conversationId={conversationId}
+                  isAdmin={isAdmin}
+                  hasProposals={proposals.length > 0}
+                />
+              </TabPanel>
             )}
-          </Stack>
-        </Box>
+          </TabPanels>
+        </Tabs>
 
         <Divider />
 

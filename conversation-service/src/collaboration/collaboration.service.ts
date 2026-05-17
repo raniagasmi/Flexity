@@ -14,7 +14,8 @@ import { Conversation, ConversationParticipant } from './schemas/conversation.sc
 import { Message } from './schemas/message.schema';
 import { TaskProposal } from './schemas/task-proposal.schema';
 import { CreateConversationDto, SendMessageDto } from './dto/create-conversation.dto';
-import { AiService } from './ai.service';
+import { UpdateProposalScheduleDto } from './dto/update-proposal-schedule.dto';
+import { AiService, GeneratedTask } from './ai.service';
 
 type UserProfile = {
   id?: string;
@@ -102,16 +103,9 @@ export class CollaborationService {
       })),
     });
 
-    const proposals = await this.proposalModel.insertMany(
-      aiResult.tasks.map((task) => ({
-        conversationId: conversation._id.toString(),
-        title: task.title,
-        description: task.description,
-        assignedTo: task.assignedTo,
-        priority: task.priority,
-        status: 'DRAFT' as const,
-        createdAt: new Date(),
-      })),
+    const proposals = await this.insertProposalsWithSchedule(
+      conversation._id.toString(),
+      aiResult.tasks,
     );
 
     await this.messageModel.create({
@@ -185,17 +179,7 @@ export class CollaborationService {
       })),
     });
 
-    const proposals = await this.proposalModel.insertMany(
-      tasks.tasks.map((task) => ({
-        conversationId,
-        title: task.title,
-        description: task.description,
-        assignedTo: task.assignedTo,
-        priority: task.priority,
-        status: 'DRAFT' as const,
-        createdAt: new Date(),
-      })),
-    );
+    const proposals = await this.insertProposalsWithSchedule(conversationId, tasks.tasks);
 
     return {
       tasks: tasks.tasks,
@@ -273,6 +257,48 @@ export class CollaborationService {
     };
   }
 
+  async getConversationGantt(conversationId: string) {
+    await this.ensureConversationExists(conversationId);
+    const proposals = await this.proposalModel.find({ conversationId }).sort({ startDay: 1, createdAt: 1 }).lean();
+    const enriched = await this.enrichProposals(proposals);
+
+    return enriched.map((proposal) => {
+      const id = proposal._id?.toString?.() ?? String(proposal._id ?? '');
+      return {
+        id,
+        title: proposal.title,
+        assignee: proposal.assignee?.fullName ?? proposal.assignedTo,
+        startDay: proposal.startDay ?? 0,
+        estimatedDays: proposal.estimatedDays ?? 2,
+        dependsOn: proposal.dependsOn ?? [],
+        status: (proposal.status ?? 'DRAFT').toLowerCase(),
+      };
+    });
+  }
+
+  async updateProposalSchedule(proposalId: string, input: UpdateProposalScheduleDto) {
+    if (!Number.isFinite(input.startDay) || input.startDay < 0) {
+      throw new BadRequestException('startDay must be a non-negative number');
+    }
+
+    if (!Number.isFinite(input.estimatedDays) || input.estimatedDays < 1) {
+      throw new BadRequestException('estimatedDays must be at least 1');
+    }
+
+    const proposal = await this.proposalModel.findById(proposalId);
+    if (!proposal) {
+      throw new NotFoundException(`Proposal ${proposalId} not found`);
+    }
+
+    await this.ensureAdminAccess(proposal.conversationId, input.adminId);
+
+    proposal.startDay = Math.round(input.startDay);
+    proposal.estimatedDays = Math.round(input.estimatedDays);
+    await proposal.save();
+
+    return this.enrichProposal(proposal.toObject());
+  }
+
   async rejectProposal(proposalId: string, adminId: string) {
     const proposal = await this.proposalModel.findById(proposalId);
     if (!proposal) {
@@ -284,6 +310,38 @@ export class CollaborationService {
     proposal.status = 'REJECTED';
     await proposal.save();
     return this.enrichProposal(proposal.toObject());
+  }
+
+  private async insertProposalsWithSchedule(conversationId: string, tasks: GeneratedTask[]) {
+    const created = await this.proposalModel.insertMany(
+      tasks.map((task, index) => ({
+        conversationId,
+        title: task.title,
+        description: task.description,
+        assignedTo: task.assignedTo,
+        priority: task.priority,
+        status: 'DRAFT' as const,
+        createdAt: new Date(),
+        startDay: index * 2,
+        estimatedDays: 2,
+        dependsOn: [] as string[],
+      })),
+    );
+
+    const ids = created.map((proposal) => proposal._id.toString());
+    const dependencyUpdates = created.map((proposal, index) => {
+      const dependsOn: string[] = [];
+      if (index > 0) {
+        dependsOn.push(ids[index - 1]);
+      }
+
+      return this.proposalModel.updateOne({ _id: proposal._id }, { $set: { dependsOn } });
+    });
+
+    await Promise.all(dependencyUpdates);
+
+    const refreshed = await this.proposalModel.find({ _id: { $in: created.map((proposal) => proposal._id) } });
+    return refreshed.sort((a, b) => a.startDay - b.startDay);
   }
 
   private async ensureConversationExists(conversationId: string) {

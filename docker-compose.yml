@@ -61,6 +61,7 @@ services:
     environment:
       HOST: 0.0.0.0
       PORT: 3002
+      MICRO_PORT: 3003
       DB_HOST: postgres
       DB_PORT: 5432
       DB_USERNAME: ${POSTGRES_USER:-postgres}
@@ -87,9 +88,15 @@ services:
       PORT: 3006
       MONGO_URI: mongodb://mongo:27017/conversation_service
       USER_SERVICE_HOST: user-service
-      USER_SERVICE_PORT: 3001
+      USER_SERVICE_PORT: 3005
       TASK_SERVICE_HOST: task-service
-      TASK_SERVICE_PORT: 3002
+      TASK_SERVICE_PORT: 3003
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3006/health', res => { process.exit(res.statusCode === 200 ? 0 : 1); }).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
     ports:
       - "3006:3006"
 
@@ -105,14 +112,14 @@ services:
       task-service:
         condition: service_started
       conversation-service:
-        condition: service_started
+        condition: service_healthy
     environment:
       PORT: 3000
       JWT_SECRET: ${JWT_SECRET:-change_this_to_a_long_random_secret}
       USER_SERVICE_HOST: user-service
-      USER_SERVICE_PORT: 3001
+      USER_SERVICE_PORT: 3005
       TASK_SERVICE_HOST: task-service
-      TASK_SERVICE_PORT: 3002
+      TASK_SERVICE_PORT: 3003
       CONVERSATION_SERVICE_HOST: conversation-service
       CONVERSATION_SERVICE_PORT: ${CONVERSATION_SERVICE_PORT:-3006}
     ports:

@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1.7
-
 FROM node:20-slim AS builder
 
 WORKDIR /app
@@ -23,6 +21,6 @@ COPY --from=builder /app/dist ./dist
 USER node
 EXPOSE 3002
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 CMD wget -qO- http://localhost:3002/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 CMD ["node","-e","const p = process.env.PORT || process.env.HTTP_PORT || 3002; require('http').get('http://localhost:' + p + '/health', res => { process.exit(res.statusCode === 200 ? 0 : 1); }).on('error', () => process.exit(1))"]
 
-CMD ["sh", "-c", "node dist/migration-runner.js && node dist/main.js"]
+CMD ["node", "dist/main.js"]

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { TaskModule } from './task/task.module';
+import { HealthController } from './health.controller';
 import { databaseConfig } from './config/database.config';
 
 @Module({
@@ -10,5 +11,6 @@ import { databaseConfig } from './config/database.config';
     TypeOrmModule.forRoot(databaseConfig),
     TaskModule,
   ],
+  controllers: [HealthController],
 })
 export class AppModule {}

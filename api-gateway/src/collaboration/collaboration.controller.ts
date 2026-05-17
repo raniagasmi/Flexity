@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards, ForbiddenException } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards, ForbiddenException } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
@@ -86,6 +86,30 @@ export class CollaborationController {
     this.collaborationGateway.emitAiGeneratedTasks({ conversationId: id, ...response });
     this.collaborationGateway.emitProposalUpdates({ conversationId: id, ...response });
     return response;
+  }
+
+  @Get('conversations/:id/gantt')
+  async getGantt(@Param('id') id: string) {
+    return this.collaborationService.getConversationGantt(id);
+  }
+
+  @Patch('proposals/:id/schedule')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  async updateSchedule(
+    @Param('id') id: string,
+    @Body() body: { startDay: number; estimatedDays: number },
+    @Req() req: { user: { userId?: string } },
+  ) {
+    const proposal = await this.collaborationService.updateProposalSchedule(id, {
+      ...body,
+      adminId: req.user?.userId ?? '',
+    }) as CollaborationProposalResponse;
+    const conversationId = proposal.conversationId ?? proposal.proposal?.conversationId;
+    if (conversationId) {
+      this.collaborationGateway.emitProposalUpdates({ conversationId, proposal });
+    }
+    return proposal;
   }
 
   @Post('proposals/:id/approve')

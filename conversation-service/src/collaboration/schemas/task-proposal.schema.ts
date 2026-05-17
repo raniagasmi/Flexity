@@ -31,6 +31,15 @@ export class TaskProposal {
 
   @Prop({ required: false })
   createdTaskId?: string;
+
+  @Prop({ default: 0 })
+  startDay!: number;
+
+  @Prop({ default: 2 })
+  estimatedDays!: number;
+
+  @Prop({ type: [String], default: [] })
+  dependsOn!: string[];
 }
 
 export const TaskProposalSchema = SchemaFactory.createForClass(TaskProposal);
