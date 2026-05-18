@@ -58,9 +58,15 @@ interface BoardProps {
   showControls?: boolean;
   onTaskSelect?: (task: TaskType) => void;
   showTaskActionPanel?: boolean;
+  onTasksChanged?: () => void;
 }
 
-export const Board: React.FC<BoardProps> = ({ showControls = true, onTaskSelect, showTaskActionPanel = true }) => {
+export const Board: React.FC<BoardProps> = ({
+  showControls = true,
+  onTaskSelect,
+  showTaskActionPanel = true,
+  onTasksChanged,
+}) => {
   const [boardData, setBoardData] = useState<BoardData>({
     TODO: [],
     IN_PROGRESS: [],
@@ -173,6 +179,12 @@ export const Board: React.FC<BoardProps> = ({ showControls = true, onTaskSelect,
       setLoading(false);
     }
   }, [toast, userRole, currentUserId]);
+
+  const refreshAfterMutation = useCallback(async () => {
+    await fetchTasks();
+    onTasksChanged?.();
+  }, [fetchTasks, onTasksChanged]);
+
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
@@ -239,7 +251,7 @@ export const Board: React.FC<BoardProps> = ({ showControls = true, onTaskSelect,
           duration: 3000,
           isClosable: true,
         });
-        await fetchTasks();
+        await refreshAfterMutation();
       } catch (error) {
         toast({
           title: "Error restoring task",
@@ -456,7 +468,7 @@ export const Board: React.FC<BoardProps> = ({ showControls = true, onTaskSelect,
         duration: 3000,
         isClosable: true,
       });
-      fetchTasks();
+      await refreshAfterMutation();
     } catch (error) {
       console.error("Failed to delete task:", error);
       toast({
@@ -478,7 +490,7 @@ export const Board: React.FC<BoardProps> = ({ showControls = true, onTaskSelect,
         duration: 3000,
         isClosable: true,
       });
-      fetchTasks();
+      await refreshAfterMutation();
     } catch (error) {
       console.error("Failed to archive task:", error);
       toast({
@@ -541,7 +553,7 @@ export const Board: React.FC<BoardProps> = ({ showControls = true, onTaskSelect,
           isClosable: true,
         });
       }
-      fetchTasks();
+      await refreshAfterMutation();
       onClose();
       setCurrentTask(null);
     } catch (error) {

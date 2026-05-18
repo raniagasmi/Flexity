@@ -102,7 +102,7 @@ const WelcomeOnboarding = () => {
           Set up your workspace in one quick step
         </Heading>
         <Text color="rgba(216,216,219,0.76)" mb={8}>
-          Add the basics now so tasks, collaboration, and hiring recommendations feel relevant from day one.
+          Add the basics now so tasks, collaboration, and project recommendations feel relevant from day one.
         </Text>
 
         {(message || !currentUser?.emailVerified) && (
@@ -158,9 +158,9 @@ const WelcomeOnboarding = () => {
               <Select name="primaryUseCase" value={form.primaryUseCase} onChange={handleChange} bg="rgba(216,216,219,0.08)" borderColor="rgba(216,216,219,0.26)" color="#D8D8DB">
                 <option value="">Select the main reason you’re here</option>
                 <option value="task_execution">Task execution</option>
-                <option value="collaborative_hiring">Collaborative hiring</option>
+                <option value="project_management">Project management</option>
                 <option value="cross_functional_operations">Cross-functional operations</option>
-                <option value="delivery_and_hr">Delivery + HR in one workspace</option>
+                <option value="team_coordination">Team coordination</option>
               </Select>
             </FormControl>
 

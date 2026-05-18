@@ -42,7 +42,6 @@ import { EmployeeMetricsGrid } from './EmployeeMetricsCard';
 import { AlertsPanel } from './AlertsPanel';
 import {
   AlertVolumeChart,
-  HiringFunnelChart,
   ProjectBurndownChart,
   TaskCompletionTrendChart,
 } from './AdminCharts';
@@ -321,7 +320,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const pageDescription =
     section === 'team-analytics'
-      ? 'Snapshot charts for delivery, alerts, hiring, and burndown trends'
+      ? 'Snapshot charts for delivery, alerts, and burndown trends'
       : section === 'tasks'
         ? 'Employees, projects, alerts, and task board in one admin workspace'
         : 'Real-time team analytics and workload management';
@@ -525,13 +524,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 Alert volume - last 14 days
               </Text>
               <AlertVolumeChart />
-            </Box>
-
-            <Box bg="white" borderRadius="lg" p={4} boxShadow="sm">
-              <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={3}>
-                Hiring funnel
-              </Text>
-              <HiringFunnelChart />
             </Box>
 
             <Box bg="white" borderRadius="lg" p={4} boxShadow="sm">

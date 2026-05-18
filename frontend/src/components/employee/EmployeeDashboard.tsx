@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
   Fade,
   Badge,
   Box,
@@ -588,17 +592,26 @@ export const EmployeeDashboard = ({
                     <Skeleton height="120px" borderRadius="xl" />
                     <Skeleton height="120px" borderRadius="xl" />
                   </Stack>
-                ) : data?.tasks.length === 0 ? (
-                  <EmptyState
-                    icon={IconClipboardList}
-                    title="No tasks yet"
-                    buttonLabel="Create your first task"
-                    onAction={() => {}}
-                  />
                 ) : (
-                  <Box ref={boardSectionRef}>
-                    <Board showControls={false} showTaskActionPanel={false} onTaskSelect={handleTaskSelect} />
-                  </Box>
+                  <Stack spacing={4} ref={boardSectionRef}>
+                    {data?.tasks.length === 0 && (
+                      <Alert status="info" borderRadius="xl" bg="teal.50" borderWidth={1} borderColor="teal.100">
+                        <AlertIcon color="teal.500" />
+                        <Box>
+                          <AlertTitle fontSize="sm">No tasks assigned yet</AlertTitle>
+                          <AlertDescription fontSize="sm">
+                            Use the + on any column to create a task, or wait for an admin to assign one to you.
+                          </AlertDescription>
+                        </Box>
+                      </Alert>
+                    )}
+                    <Board
+                      showControls={false}
+                      showTaskActionPanel={false}
+                      onTaskSelect={handleTaskSelect}
+                      onTasksChanged={fetchData}
+                    />
+                  </Stack>
                 )}
               </Fade>
             )}

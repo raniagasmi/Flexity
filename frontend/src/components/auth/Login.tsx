@@ -119,10 +119,10 @@ const Login = () => {
             Secure team workspace
           </Badge>
           <Heading size={{ base: 'lg', md: 'xl' }} color="#D8D8DB" mb={3} lineHeight="1.1">
-            Return to the workspace where delivery and hiring stay aligned
+            Return to the workspace where tasks and collaboration stay aligned
           </Heading>
           <Text color="rgba(216,216,219,0.82)" maxW="42ch" mb={8}>
-            Track execution, collaborate on decisions, and manage hiring context without hopping between disconnected tools.
+            Track execution, collaborate on decisions, and keep project priorities visible without hopping between disconnected tools.
           </Text>
 
           <Stack spacing={4}>
@@ -136,7 +136,7 @@ const Login = () => {
             </HStack>
             <HStack spacing={3} p={3} borderRadius="xl" bg="rgba(216,216,219,0.08)">
               <Icon as={CheckCircleIcon} color="teal.300" />
-              <Text color="#D8D8DB" fontSize="sm">Recruitment workflows connected to execution priorities</Text>
+              <Text color="#D8D8DB" fontSize="sm">Task and project workflows connected to team priorities</Text>
             </HStack>
           </Stack>
 

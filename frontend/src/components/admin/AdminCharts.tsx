@@ -73,15 +73,6 @@ const alertVolumeData = [
 ];
 
 // TODO: replace with real API data.
-const hiringFunnelData = [
-  { stage: 'Applied', value: 96 },
-  { stage: 'Screened', value: 64 },
-  { stage: 'Interviewed', value: 31 },
-  { stage: 'Offered', value: 12 },
-  { stage: 'Accepted', value: 7 },
-];
-
-// TODO: replace with real API data.
 const projectBurndownData = [
   { week: 'Week 1', Atlas: 48, Nova: 36, Orion: 27, Helix: 18 },
   { week: 'Week 2', Atlas: 39, Nova: 29, Orion: 21, Helix: 15 },
@@ -115,18 +106,6 @@ export const AlertVolumeChart: React.FC = () => (
       <Bar dataKey="info" stackId="alerts" fill="#3182CE" radius={[4, 4, 0, 0]} />
       <Bar dataKey="warning" stackId="alerts" fill="#D69E2E" radius={[4, 4, 0, 0]} />
       <Bar dataKey="critical" stackId="alerts" fill="#E53E3E" radius={[4, 4, 0, 0]} />
-    </BarChart>
-  </ResponsiveContainer>
-);
-
-export const HiringFunnelChart: React.FC = () => (
-  <ResponsiveContainer width="100%" height={220}>
-    <BarChart data={hiringFunnelData} layout="vertical" margin={{ top: 8, right: 16, left: 16, bottom: 8 }}>
-      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" />
-      <XAxis type="number" {...axisProps} />
-      <YAxis type="category" dataKey="stage" width={88} {...axisProps} />
-      <Tooltip />
-      <Bar dataKey="value" fill="#319795" radius={[0, 4, 4, 0]} />
     </BarChart>
   </ResponsiveContainer>
 );

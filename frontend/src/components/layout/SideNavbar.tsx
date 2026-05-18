@@ -2,14 +2,12 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Badge, Box, Button, Flex, Image, Stack } from '@chakra-ui/react';
 import {
   IconBell,
-  IconBriefcase,
   IconCalendar,
   IconFolder,
   IconLayoutDashboard,
   IconMessages,
   IconUserCircle,
   IconUserShield as IconShieldPerson,
-  IconUsersGroup,
   type TablerIcon,
 } from '@tabler/icons-react';
 import { authService } from '../../services/auth.service';
@@ -116,23 +114,6 @@ const SideNavbar = ({ onLogoutClick, onNavigate, isInDrawer = false }: SideNavba
           icon: IconMessages,
           isActive: location.pathname === '/collaboration',
           onClick: () => navigateTo('/collaboration'),
-        },
-      ],
-    },
-    {
-      label: 'Hiring',
-      items: [
-        {
-          label: 'Job studio',
-          icon: IconBriefcase,
-          isActive: location.pathname === '/recruitment',
-          onClick: () => navigateTo('/recruitment'),
-        },
-        {
-          label: 'Hiring pipeline',
-          icon: IconUsersGroup,
-          isActive: location.pathname === '/admin/recruitment',
-          onClick: () => navigateTo('/admin/recruitment'),
         },
       ],
     },

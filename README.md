@@ -20,7 +20,6 @@ Flexity is a microservices-based task management platform with authenticated use
 | api-gateway | HTTP entrypoint and auth-protected orchestration layer | 3000 |
 | user-service | Users, auth, and profile data | 3001 |
 | task-service | Task persistence and task lifecycle | 3002 |
-| recruitment-service | Recruitment and job-offer workflows | 3004 |
 | conversation-service | Collaboration conversations, messages, and AI proposals | 3006 |
 | mongo | Shared MongoDB instance | 27017 |
 | postgres | Shared PostgreSQL instance | 5432 |
@@ -61,7 +60,6 @@ Recommended startup order is handled by Compose:
 - API gateway: http://localhost:3000
 - User service: http://localhost:3001
 - Task service: http://localhost:3002
-- Recruitment service: http://localhost:3004
 - Conversation service: http://localhost:3006
 
 ## Environment Variables
@@ -99,11 +97,6 @@ npm run start:dev
 
 # task-service
 cd task-service
-npm install
-npm run start:dev
-
-# recruitment-service
-cd recruitment-service
 npm install
 npm run start:dev
 

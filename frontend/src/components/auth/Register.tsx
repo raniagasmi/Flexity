@@ -154,7 +154,7 @@ const Register = () => {
           </Heading>
 
           <Text color="rgba(216,216,219,0.82)" maxW="42ch" mb={8}>
-            Sign up once, confirm your email, capture your team context, and move directly into tasks, collaboration, and recruitment.
+            Sign up once, confirm your email, capture your team context, and move directly into tasks and collaboration.
           </Text>
 
           <Stack spacing={4}>

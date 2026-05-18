@@ -59,14 +59,9 @@ const TopNavbar = () => {
             Tasks
           </Text>
           {isAdmin && (
-            <>
-              <Text as={NavLink} to="/recruitment" sx={navLinkSx}>
-                Recruitment
-              </Text>
-              <Text as={NavLink} to="/admin" sx={navLinkSx}>
-                Admin
-              </Text>
-            </>
+            <Text as={NavLink} to="/admin" sx={navLinkSx}>
+              Admin
+            </Text>
           )}
         </HStack>
 

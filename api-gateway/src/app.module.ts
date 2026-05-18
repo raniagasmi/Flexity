@@ -3,7 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { AuthModule } from './auth/auth.module';
 import { CollaborationModule } from './collaboration/collaboration.module';
-import { RecruitmentModule } from './recruitment/recruitment.module';
 import { TaskModule } from './task/task.module';
 import { UserModule } from './user/user.module';
 import { DashboardModule } from './dashboard/dashboard.module';
@@ -25,7 +24,6 @@ import { DashboardModule } from './dashboard/dashboard.module';
     ]),
     AuthModule,
     CollaborationModule,
-    RecruitmentModule,
     TaskModule,
     UserModule,
     DashboardModule,
