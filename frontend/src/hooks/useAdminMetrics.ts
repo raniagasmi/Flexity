@@ -359,6 +359,7 @@ export const useAdminDashboard = (isAdmin: boolean = false, refreshKey: number =
 
   return {
     dashboardData,
+    tasks,
     isLoading,
     error,
   };

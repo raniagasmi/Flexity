@@ -13,44 +13,19 @@ import {
 } from '@chakra-ui/react';
 import { closestCorners, DndContext, DragEndEvent, useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { addDays, format, isSameDay, startOfWeek } from 'date-fns';
+import { format } from 'date-fns';
 import Task from '../tasks/Task';
 import { taskService } from '../../services/task.service';
-import { Task as TaskType, TaskPriority } from '../../types/task';
-
-const WORKDAY_START_MINUTES = 9 * 60;
-const WORKDAY_CAPACITY_MINUTES = 8 * 60;
-
-const priorityDurationMinutes: Record<TaskPriority, number> = {
-  LOW: 60,
-  MEDIUM: 90,
-  HIGH: 120,
-};
-
-const toValidDate = (value?: Date | string | null) => {
-  if (!value) {
-    return null;
-  }
-
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-};
-
-const hasExplicitTime = (date: Date) =>
-  date.getHours() !== 0 || date.getMinutes() !== 0 || date.getSeconds() !== 0 || date.getMilliseconds() !== 0;
-
-const estimateDuration = (task: TaskType) => priorityDurationMinutes[task.priority] ?? priorityDurationMinutes.MEDIUM;
-
-const dayKey = (date: Date) => format(date, 'yyyy-MM-dd');
-
-type ScheduledTask = TaskType & { dueDate: Date };
-
-type DaySchedule = {
-  key: string;
-  day: Date;
-  tasks: ScheduledTask[];
-  assignedMinutes: number;
-};
+import { Task as TaskType } from '../../types/task';
+import {
+  buildWeekSchedules,
+  computeScheduleDateForDay,
+  DaySchedule,
+  getOverflowTasks,
+  getWeekDays,
+  toValidDate,
+  WORKDAY_CAPACITY_MINUTES,
+} from '../../utils/workload';
 
 interface ScheduleColumnProps {
   schedule: DaySchedule;
@@ -203,82 +178,16 @@ const MyWeekCalendar = ({ tasks, onTaskSelect }: MyWeekCalendarProps) => {
     setCalendarTasks(tasks);
   }, [tasks]);
 
-  const weekDays = useMemo(() => {
-    const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
-    return Array.from({ length: 7 }, (_, index) => addDays(monday, index));
-  }, []);
+  const weekDays = useMemo(() => getWeekDays(), []);
 
-  const schedules = useMemo<DaySchedule[]>(() => {
-    const buckets = new Map<string, TaskType[]>();
-
-    weekDays.forEach((day) => {
-      buckets.set(dayKey(day), []);
-    });
-
-    calendarTasks.forEach((task) => {
-      const baseDate = toValidDate(task.dueDate ?? task.createdAt);
-
-      if (!baseDate) {
-        return;
-      }
-
-      const matchedDay = weekDays.find((day) => isSameDay(day, baseDate));
-      if (!matchedDay) {
-        return;
-      }
-
-      buckets.get(dayKey(matchedDay))?.push(task);
-    });
-
-    return weekDays.map((day) => {
-      const tasksForDay = (buckets.get(dayKey(day)) ?? []).slice().sort((left, right) => {
-        const leftDate = toValidDate(left.dueDate ?? left.createdAt)?.getTime() ?? 0;
-        const rightDate = toValidDate(right.dueDate ?? right.createdAt)?.getTime() ?? 0;
-
-        if (leftDate !== rightDate) {
-          return leftDate - rightDate;
-        }
-
-        if (left.order !== right.order) {
-          return left.order - right.order;
-        }
-
-        return estimateDuration(right) - estimateDuration(left);
-      });
-
-      let cursor = WORKDAY_START_MINUTES;
-      const scheduledTasks = tasksForDay.map((task) => {
-        const existingDate = toValidDate(task.dueDate);
-        const useExplicitTime = existingDate ? hasExplicitTime(existingDate) : false;
-        const displayMinutes = useExplicitTime && existingDate ? existingDate.getHours() * 60 + existingDate.getMinutes() : cursor;
-        const scheduledAt = new Date(day);
-        scheduledAt.setHours(Math.floor(displayMinutes / 60), displayMinutes % 60, 0, 0);
-
-        const durationMinutes = estimateDuration(task);
-        cursor = Math.max(cursor, displayMinutes + durationMinutes);
-
-        return {
-          ...task,
-          dueDate: scheduledAt,
-        } as ScheduledTask;
-      });
-
-      return {
-        key: dayKey(day),
-        day,
-        tasks: scheduledTasks,
-        assignedMinutes: tasksForDay.reduce((sum, task) => sum + estimateDuration(task), 0),
-      };
-    });
-  }, [calendarTasks, weekDays]);
+  const schedules = useMemo<DaySchedule[]>(
+    () => buildWeekSchedules(calendarTasks, weekDays),
+    [calendarTasks, weekDays]
+  );
 
   const overflowTasks = useMemo(
-    () =>
-      calendarTasks.filter((task) => {
-        const baseDate = toValidDate(task.dueDate ?? task.createdAt);
-        return !baseDate || !weekDays.some((day) => isSameDay(day, baseDate));
-      }),
-    [calendarTasks, weekDays],
+    () => getOverflowTasks(calendarTasks, weekDays),
+    [calendarTasks, weekDays]
   );
 
   const moveTaskToDay = async (taskId: string, targetDayKey: string) => {
@@ -289,20 +198,16 @@ const MyWeekCalendar = ({ tasks, onTaskSelect }: MyWeekCalendarProps) => {
       return;
     }
 
-    const taskDuration = estimateDuration(sourceTask);
-    const tasksOnTargetDay = targetSchedule.tasks.filter((task) => task.id !== taskId);
-    const occupiedMinutes = tasksOnTargetDay.reduce((sum, task) => sum + estimateDuration(task), 0);
-    const nextStartMinutes = Math.min(
-      WORKDAY_START_MINUTES + occupiedMinutes,
-      WORKDAY_START_MINUTES + WORKDAY_CAPACITY_MINUTES - taskDuration,
+    const nextDate = computeScheduleDateForDay(
+      targetSchedule.day,
+      targetSchedule.tasks,
+      taskId,
+      sourceTask
     );
-
-    const nextDate = new Date(targetSchedule.day);
-    nextDate.setHours(Math.floor(nextStartMinutes / 60), nextStartMinutes % 60, 0, 0);
 
     const previousTasks = calendarTasks;
     setCalendarTasks((current) =>
-      current.map((task) => (task.id === taskId ? { ...task, dueDate: nextDate } : task)),
+      current.map((task) => (task.id === taskId ? { ...task, dueDate: nextDate } : task))
     );
 
     try {

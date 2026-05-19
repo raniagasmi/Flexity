@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Avatar,
   Badge,
   Box,
   Button,
@@ -49,6 +48,7 @@ import { ProjectMetricsView } from './ProjectMetricsView';
 import { EmployeeMetrics, AdminDashboardData } from '../../types/analytics';
 import { authService } from '../../services/auth.service';
 import { Board } from '../tasks/Board';
+import { TeamWorkloadHeatmap } from './TeamWorkloadHeatmap';
 
 interface AdminDashboardProps {
   isAdmin: boolean;
@@ -109,18 +109,6 @@ const EmployeeDetailContent: React.FC<{ employee: EmployeeMetrics }> = ({ employ
     </SimpleGrid>
   </Stack>
 );
-
-const getWorkloadBadge = (employee: EmployeeMetrics) => {
-  if (employee.isOverloaded) {
-    return { label: 'Overloaded', colorScheme: 'red' as const };
-  }
-
-  if (employee.isUnderutilized) {
-    return { label: 'Underutilized', colorScheme: 'orange' as const };
-  }
-
-  return { label: 'Balanced', colorScheme: 'green' as const };
-};
 
 /**
  * Dashboard overview stats
@@ -203,7 +191,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 }) => {
   const navigate = useNavigate();
   const [refreshKey, setRefreshKey] = useState(0);
-  const { dashboardData, isLoading, error } = useAdminDashboard(isAdmin, refreshKey);
+  const { dashboardData, tasks, isLoading, error } = useAdminDashboard(isAdmin, refreshKey);
   const { currentStatus, togglePause } = useTimeTracking(
     authService.getCurrentUser()?.id
   );
@@ -217,26 +205,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     () => dashboardData?.alerts.filter((alert) => !alert.isResolved) ?? [],
     [dashboardData]
   );
-
-  const topEmployees = useMemo(() => {
-    if (!dashboardData) {
-      return [];
-    }
-
-    return [...dashboardData.employees]
-      .sort((a, b) => {
-        if (a.isOverloaded !== b.isOverloaded) {
-          return a.isOverloaded ? -1 : 1;
-        }
-
-        if (b.taskCount !== a.taskCount) {
-          return b.taskCount - a.taskCount;
-        }
-
-        return b.weightedLoad - a.weightedLoad;
-      })
-      .slice(0, 3);
-  }, [dashboardData]);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleResolveAlert = (alertId: string) => {
@@ -370,73 +338,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <>
           <DashboardOverview dashboardData={dashboardData} isLoading={isLoading} />
 
-          <SimpleGrid columns={{ base: 1 }} spacing={6} mb={6}>
-            <Skeleton isLoaded={!isLoading} borderRadius="lg">
-              <Box bg="white" borderRadius="lg" p={4} boxShadow="sm" minH="260px">
-                <Flex justify="space-between" align="center" mb={4}>
-                  <VStack align="start" spacing={0}>
-                    <Heading size="md">Team Load Watchlist</Heading>
-                    <Text fontSize="sm" color="gray.600">
-                      Highest current task pressure across the team
-                    </Text>
-                  </VStack>
-                  <Button size="sm" variant="ghost" colorScheme="blue" onClick={() => openTasksSection('employees')}>
-                    View all employees
-                  </Button>
-                </Flex>
+          <Skeleton isLoaded={!isLoading} borderRadius="lg" mb={6}>
+            <TeamWorkloadHeatmap
+              employees={dashboardData?.employees ?? []}
+              tasks={tasks}
+              isLoading={isLoading}
+              onTaskReassigned={handleRefresh}
+            />
+          </Skeleton>
 
-                <Stack spacing={3}>
-                  {topEmployees.length === 0 ? (
-                    <Text color="gray.500" textAlign="center" py={8}>
-                      No employee load data available yet.
-                    </Text>
-                  ) : (
-                    topEmployees.map((employee) => {
-                      const workloadBadge = getWorkloadBadge(employee);
-
-                      return (
-                        <Flex
-                          key={employee.userId}
-                          p={3}
-                          borderWidth="1px"
-                          borderColor="gray.200"
-                          borderRadius="md"
-                          align="center"
-                          justify="space-between"
-                          gap={3}
-                          cursor="pointer"
-                          _hover={{ borderColor: 'blue.300', shadow: 'sm' }}
-                          onClick={() => handleEmployeeSelect(employee)}
-                        >
-                          <HStack spacing={3}>
-                            <Avatar name={employee.userName} src={employee.avatarUrl} size="sm" />
-                            <VStack align="start" spacing={0}>
-                              <Text fontWeight="semibold">{employee.userName}</Text>
-                              <Text fontSize="sm" color="gray.600">
-                                {employee.taskCount} active tasks
-                              </Text>
-                            </VStack>
-                          </HStack>
-                          <Badge colorScheme={workloadBadge.colorScheme} px={2} py={1} borderRadius="full">
-                            {workloadBadge.label}
-                          </Badge>
-                        </Flex>
-                      );
-                    })
-                  )}
-                </Stack>
-
-                <HStack spacing={3} mt={6} flexWrap="wrap">
-                  <Button colorScheme="blue" variant="outline" onClick={() => openTasksSection('projects')}>
-                    View all projects
-                  </Button>
-                  <Button colorScheme="blue" onClick={() => openTasksSection('board')}>
-                    Open board
-                  </Button>
-                </HStack>
-              </Box>
-            </Skeleton>
-          </SimpleGrid>
+          <HStack spacing={3} mb={6} flexWrap="wrap">
+            <Button colorScheme="blue" variant="outline" size="sm" onClick={() => openTasksSection('employees')}>
+              View all employees
+            </Button>
+            <Button colorScheme="blue" variant="outline" size="sm" onClick={() => openTasksSection('projects')}>
+              View all projects
+            </Button>
+            <Button colorScheme="blue" size="sm" onClick={() => openTasksSection('board')}>
+              Open board
+            </Button>
+          </HStack>
         </>
       ) : null}
 
